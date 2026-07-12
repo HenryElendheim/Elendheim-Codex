@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -49,6 +51,7 @@ import com.elendheim.codex.codex.model.EntityClass
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.ClassChip
+import com.elendheim.codex.ui.components.RichCodexText
 import com.elendheim.codex.ui.components.SectionLabel
 import com.elendheim.codex.ui.components.ThreatPips
 
@@ -66,7 +69,11 @@ fun DossierScreen(
     // Read the dossier straight from the live map so any edit shows at once.
     val byId by vm.entitiesById.collectAsState()
     val classes by vm.classes.collectAsState()
+    val redact by vm.redactionMode.collectAsState()
     val entity = byId[entityId]
+
+    // Lookup from designation to entity so [ELD-007] style links can resolve.
+    val byDesignation = byId.values.associateBy { it.designation }
 
     var menuOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -87,6 +94,13 @@ fun DossierScreen(
                 },
                 actions = {
                     if (entity != null) {
+                        // Quick redaction toggle. Hides marked phrases across the app.
+                        IconButton(onClick = { vm.setRedactionMode(!redact) }) {
+                            Icon(
+                                imageVector = if (redact) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (redact) "Show redacted text" else "Redact marked text"
+                            )
+                        }
                         IconButton(onClick = onEdit) {
                             Icon(Icons.Filled.Edit, contentDescription = "Edit")
                         }
@@ -154,28 +168,30 @@ fun DossierScreen(
                 )
             }
             if (entity.summary.isNotBlank()) {
-                Text(
+                RichCodexText(
                     text = entity.summary,
+                    byDesignation = byDesignation,
+                    redact = redact,
+                    onOpen = onOpenRelated,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 12.dp)
                 )
             }
 
-            TextSection(label = "Description", body = entity.description)
+            TextSection("Description", entity.description, byDesignation, redact, onOpenRelated)
 
             if (entity.abilities.isNotEmpty()) {
                 SectionLabel(text = "Abilities", modifier = Modifier.padding(top = 20.dp))
-                entity.abilities.forEach { AbilityBlock(it) }
+                entity.abilities.forEach { AbilityBlock(it, byDesignation, redact, onOpenRelated) }
             }
 
             if (entity.weaknesses.isNotEmpty()) {
                 SectionLabel(text = "How to beat it", modifier = Modifier.padding(top = 20.dp))
-                entity.weaknesses.forEach { WeaknessBlock(it) }
+                entity.weaknesses.forEach { WeaknessBlock(it, byDesignation, redact, onOpenRelated) }
             }
 
-            TextSection(label = "Containment", body = entity.containment)
-            TextSection(label = "Notes", body = entity.notes)
+            TextSection("Containment", entity.containment, byDesignation, redact, onOpenRelated)
+            TextSection("Notes", entity.notes, byDesignation, redact, onOpenRelated)
 
             if (entity.tags.isNotEmpty()) {
                 SectionLabel(text = "Tags", modifier = Modifier.padding(top = 20.dp))
@@ -217,21 +233,29 @@ fun DossierScreen(
 
 // A labelled block of freeform text, skipped entirely when the field is empty.
 @Composable
-private fun TextSection(label: String, body: String) {
+private fun TextSection(
+    label: String,
+    body: String,
+    byDesignation: Map<String, Entity>,
+    redact: Boolean,
+    onOpen: (String) -> Unit
+) {
     if (body.isBlank()) return
     Column(modifier = Modifier.padding(top = 20.dp)) {
         SectionLabel(text = label)
-        Text(
+        RichCodexText(
             text = body,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            byDesignation = byDesignation,
+            redact = redact,
+            onOpen = onOpen,
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }
 
 // One power rendered as a titled block: name, how it works, limits.
 @Composable
-private fun AbilityBlock(ability: Ability) {
+private fun AbilityBlock(ability: Ability, byDesignation: Map<String, Entity>, redact: Boolean, onOpen: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -247,17 +271,17 @@ private fun AbilityBlock(ability: Ability) {
             fontWeight = FontWeight.SemiBold
         )
         if (ability.mechanism.isNotBlank()) {
-            LabeledLine(label = "How it works", value = ability.mechanism)
+            LabeledLine("How it works", ability.mechanism, byDesignation, redact, onOpen)
         }
         if (ability.limits.isNotBlank()) {
-            LabeledLine(label = "Limits", value = ability.limits)
+            LabeledLine("Limits", ability.limits, byDesignation, redact, onOpen)
         }
     }
 }
 
 // One counter rendered as a titled block: name, severity chip, how to use it.
 @Composable
-private fun WeaknessBlock(weakness: Weakness) {
+private fun WeaknessBlock(weakness: Weakness, byDesignation: Map<String, Entity>, redact: Boolean, onOpen: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -276,14 +300,21 @@ private fun WeaknessBlock(weakness: Weakness) {
             SeverityChip(weakness.severity)
         }
         if (weakness.exploit.isNotBlank()) {
-            LabeledLine(label = "Exploit", value = weakness.exploit)
+            LabeledLine("Exploit", weakness.exploit, byDesignation, redact, onOpen)
         }
     }
 }
 
-// A small label above a value, reused inside the ability and weakness blocks.
+// A small label above a value, reused inside the ability and weakness blocks. The
+// value is rich text so links and redaction work there too.
 @Composable
-private fun LabeledLine(label: String, value: String) {
+private fun LabeledLine(
+    label: String,
+    value: String,
+    byDesignation: Map<String, Entity>,
+    redact: Boolean,
+    onOpen: (String) -> Unit
+) {
     Column(modifier = Modifier.padding(top = 8.dp)) {
         Text(
             text = label.uppercase(),
@@ -291,10 +322,12 @@ private fun LabeledLine(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace
         )
-        Text(
+        RichCodexText(
             text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            byDesignation = byDesignation,
+            redact = redact,
+            onOpen = onOpen,
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }

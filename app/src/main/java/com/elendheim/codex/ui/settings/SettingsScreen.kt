@@ -59,6 +59,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val prefix by vm.designationPrefix.collectAsState()
     val archivedCount by vm.archivedCount.collectAsState()
+    val redaction by vm.redactionMode.collectAsState()
 
     var prefixInput by remember(prefix) { mutableStateOf(prefix) }
     var confirmReplaceUri by remember { mutableStateOf<android.net.Uri?>(null) }
@@ -166,6 +167,33 @@ fun SettingsScreen(
                 )
                 OutlinedButton(onClick = { vm.setPrefix(prefixInput) }) { Text("Save") }
             }
+
+            // Reading and writing helpers.
+            SectionLabel(text = "Reading", modifier = Modifier.padding(top = 28.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Redaction mode", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        "Hides phrases you wrap in %% %% behind solid blocks. The real words are always kept.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                androidx.compose.material3.Switch(checked = redaction, onCheckedChange = { vm.setRedactionMode(it) })
+            }
+            Text(
+                text = "Tip: write [${prefixInput.ifBlank { "ELD" }}-007] in any field to make a tap link to that entry.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
+            )
 
             // Navigation rows.
             SectionLabel(text = "Archive setup", modifier = Modifier.padding(top = 28.dp))

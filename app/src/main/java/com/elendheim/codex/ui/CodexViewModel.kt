@@ -43,6 +43,16 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
     val designationPrefix: StateFlow<String> =
         repo.designationPrefix.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "ELD")
 
+    // Whether redaction mode is on. Drives how freeform text renders in the dossier.
+    val redactionMode: StateFlow<Boolean> =
+        repo.redactionMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setRedactionMode(on: Boolean) { viewModelScope.launch { repo.setRedactionMode(on) } }
+
+    // Milliseconds since the last export, used to decide when to nudge for a backup.
+    val lastExportAt: StateFlow<Long> =
+        repo.lastExportAt.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
+
     // The current filter and sort choices, changed by the index controls.
     val filters = MutableStateFlow(IndexFilters())
 
@@ -126,6 +136,11 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
         filters.value = IndexFilters(showArchived = keepArchived)
     }
 
+    // Pick a random active dossier, good for rediscovering old ideas. Returns null
+    // when the archive has no active entries yet.
+    fun randomEntityId(): String? =
+        allEntities.value.filter { it.status == "active" }.randomOrNull()?.id
+
     // Dossier actions.
     suspend fun loadEntity(id: String): Entity? = repo.getEntity(id)
     suspend fun newDraft(): Entity = repo.newDraft()
@@ -144,6 +159,7 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
             runCatching {
                 val export = repo.buildExport()
                 CodexFiles.writeText(resolver, uri, CodexFiles.encode(export))
+                repo.recordExport()
                 export.entities.size
             }.onSuccess { count -> message.value = "Exported $count entries" }
                 .onFailure { message.value = "Export failed: ${it.message}" }

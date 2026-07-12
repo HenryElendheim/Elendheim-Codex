@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -37,7 +38,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +72,11 @@ fun IndexScreen(
     val tags by vm.allTags.collectAsState()
     val filters by vm.filters.collectAsState()
     val message by vm.message.collectAsState()
+    val byId by vm.entitiesById.collectAsState()
+    val lastExport by vm.lastExportAt.collectAsState()
+
+    // The backup reminder can be waved away for the current session.
+    var nudgeDismissed by remember { mutableStateOf(false) }
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -92,6 +100,10 @@ fun IndexScreen(
             TopAppBar(
                 title = { Text("Elendheim Codex") },
                 actions = {
+                    // Open a random entry, handy for rediscovering old ideas.
+                    IconButton(onClick = { vm.randomEntityId()?.let(onOpen) }) {
+                        Icon(Icons.Filled.Shuffle, contentDescription = "Open a random entry")
+                    }
                     IconButton(onClick = {
                         val today = LocalDate.now()
                         exportLauncher.launch(
@@ -148,6 +160,23 @@ fun IndexScreen(
                 tags = tags,
                 filters = filters
             )
+
+            // A gentle backup reminder. Shows when there is data and it has either
+            // never been exported or not been exported in a month.
+            val thirtyDays = 30L * 24 * 60 * 60 * 1000
+            val stale = lastExport == 0L || (System.currentTimeMillis() - lastExport) > thirtyDays
+            if (!nudgeDismissed && byId.isNotEmpty() && stale) {
+                ExportNudge(
+                    onExport = {
+                        val today = LocalDate.now()
+                        exportLauncher.launch(
+                            "elendheim-codex-%04d-%02d-%02d.json".format(today.year, today.monthValue, today.dayOfMonth)
+                        )
+                        nudgeDismissed = true
+                    },
+                    onDismiss = { nudgeDismissed = true }
+                )
+            }
 
             if (entities.isEmpty()) {
                 EmptyState(hasFilters = filters.query.isNotBlank() ||
@@ -208,6 +237,31 @@ private fun EntityRow(entity: Entity, classes: List<com.elendheim.codex.codex.mo
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp)
             )
+        }
+    }
+}
+
+// The backup reminder card. Plain and easy to wave away, never in the way.
+@Composable
+private fun ExportNudge(onExport: () -> Unit, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Back up your archive. One file, keeps everything safe.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        androidx.compose.material3.TextButton(onClick = onExport) { Text("Export") }
+        IconButton(onClick = onDismiss) {
+            Icon(Icons.Filled.Clear, contentDescription = "Dismiss")
         }
     }
 }

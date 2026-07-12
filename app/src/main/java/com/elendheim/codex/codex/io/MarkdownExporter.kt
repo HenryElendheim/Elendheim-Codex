@@ -40,13 +40,13 @@ object MarkdownExporter {
         if (e.status != "active") sb.appendLine("- Status: ${e.status}")
         if (e.summary.isNotBlank()) {
             sb.appendLine()
-            sb.appendLine("_${e.summary}_")
+            sb.appendLine("_${e.summary.plainText()}_")
         }
 
         if (e.description.isNotBlank()) {
             sb.appendLine()
             sb.appendLine("### Description")
-            sb.appendLine(e.description)
+            sb.appendLine(e.description.plainText())
         }
 
         if (e.abilities.isNotEmpty()) {
@@ -55,8 +55,8 @@ object MarkdownExporter {
             e.abilities.forEach { a ->
                 sb.appendLine()
                 sb.appendLine("**${a.name}**")
-                if (a.mechanism.isNotBlank()) sb.appendLine("- How it works: ${a.mechanism}")
-                if (a.limits.isNotBlank()) sb.appendLine("- Limits: ${a.limits}")
+                if (a.mechanism.isNotBlank()) sb.appendLine("- How it works: ${a.mechanism.plainText()}")
+                if (a.limits.isNotBlank()) sb.appendLine("- Limits: ${a.limits.plainText()}")
             }
         }
 
@@ -66,20 +66,20 @@ object MarkdownExporter {
             e.weaknesses.forEach { w ->
                 sb.appendLine()
                 sb.appendLine("**${w.name}** (${w.severity})")
-                if (w.exploit.isNotBlank()) sb.appendLine("- ${w.exploit}")
+                if (w.exploit.isNotBlank()) sb.appendLine("- ${w.exploit.plainText()}")
             }
         }
 
         if (e.containment.isNotBlank()) {
             sb.appendLine()
             sb.appendLine("### Containment")
-            sb.appendLine(e.containment)
+            sb.appendLine(e.containment.plainText())
         }
 
         if (e.notes.isNotBlank()) {
             sb.appendLine()
             sb.appendLine("### Notes")
-            sb.appendLine(e.notes)
+            sb.appendLine(e.notes.plainText())
         }
 
         if (e.tags.isNotEmpty()) {
@@ -87,4 +87,8 @@ object MarkdownExporter {
             sb.appendLine("Tags: ${e.tags.joinToString(", ")}")
         }
     }
+
+    // The readable copy drops the redaction markers so %% never leaks into the text.
+    // The words stay, only the markup is removed.
+    private fun String.plainText(): String = replace("%%", "")
 }

@@ -18,6 +18,8 @@ class CodexRepository(private val dao: CodexDao) {
 
     companion object {
         private const val KEY_PREFIX = "designation_prefix"
+        private const val KEY_REDACTION = "redaction_mode"
+        private const val KEY_LAST_EXPORT = "last_export_at"
     }
 
     // Live streams the screens observe. Room pushes a new list whenever data changes.
@@ -32,6 +34,28 @@ class CodexRepository(private val dao: CodexDao) {
         dao.observeSettings().map { rows ->
             rows.firstOrNull { it.key == KEY_PREFIX }?.value ?: Defaults.designationPrefix
         }
+
+    // Redaction mode is a display only toggle. Text marked with %% %% shows as solid
+    // blocks when this is on, and the real words are always kept in storage.
+    val redactionMode: Flow<Boolean> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_REDACTION }?.value == "true"
+        }
+
+    suspend fun setRedactionMode(on: Boolean) {
+        dao.putSetting(SettingRecord(KEY_REDACTION, if (on) "true" else "false"))
+    }
+
+    // When the archive was last exported, used for the gentle backup reminder.
+    val lastExportAt: Flow<Long> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_LAST_EXPORT }?.value?.toLongOrNull() ?: 0L
+        }
+
+    // Called by the ViewModel after a successful export so the reminder resets.
+    suspend fun recordExport() {
+        dao.putSetting(SettingRecord(KEY_LAST_EXPORT, now().toString()))
+    }
 
     suspend fun getEntity(id: String): Entity? = dao.getEntity(id)?.toDomain()
 
