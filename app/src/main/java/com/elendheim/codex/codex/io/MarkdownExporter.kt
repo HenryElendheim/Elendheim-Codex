@@ -38,6 +38,9 @@ object MarkdownExporter {
         sb.appendLine("- Class: $classLabel")
         sb.appendLine("- Threat: ${e.threat} of 5")
         if (e.status != "active") sb.appendLine("- Status: ${e.status}")
+        // The readable copy just notes an image exists, the picture itself stays in
+        // the JSON export as base64.
+        if (e.image.isNotBlank()) sb.appendLine("- Image: attached")
         if (e.summary.isNotBlank()) {
             sb.appendLine()
             sb.appendLine("_${e.summary.plainText()}_")

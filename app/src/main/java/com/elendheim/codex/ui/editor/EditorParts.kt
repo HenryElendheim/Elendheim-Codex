@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
@@ -349,6 +352,56 @@ fun RelatedEditor(selfId: String, selected: List<String>, all: List<Entity>, onC
             ) {
                 Text(text = entity.designation, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
                 Text(text = entity.name.ifBlank { "Unnamed" }, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+// Pick, preview and remove the one optional image for a dossier. The picked image is
+// downscaled and stored as base64 on a background thread, so a big photo never blocks
+// the screen and never bloats the file.
+@Composable
+fun ImageEditor(image: String, onChange: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+
+    // Decode the stored image once per value for the preview.
+    val bitmap = remember(image) { com.elendheim.codex.codex.io.ImageCodec.toBitmap(image) }
+
+    val picker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            busy = true
+            scope.launch {
+                val encoded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.elendheim.codex.codex.io.ImageCodec.fromUri(context.contentResolver, uri)
+                }
+                if (encoded != null) onChange(encoded)
+                busy = false
+            }
+        }
+    }
+
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        if (bitmap != null) {
+            androidx.compose.foundation.Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Entry image",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 260.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) { Text("Replace") }
+                OutlinedButton(onClick = { onChange("") }, enabled = !busy) { Text("Remove") }
+            }
+        } else {
+            OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) {
+                Text(if (busy) "Adding..." else "Add an image")
             }
         }
     }

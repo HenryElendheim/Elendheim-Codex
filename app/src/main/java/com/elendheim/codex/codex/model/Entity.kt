@@ -23,6 +23,7 @@ data class Entity(
 
     val tags: List<String> = emptyList(), // freeform labels, for example sound-based
     val related: List<String> = emptyList(), // ids of linked entities
+    val image: String = "",               // one optional sketch, JPEG stored as base64
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     val status: String = "active"         // active or archived, archived is a soft delete

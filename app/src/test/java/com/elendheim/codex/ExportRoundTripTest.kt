@@ -34,6 +34,7 @@ class ExportRoundTripTest {
                 notes = "First entry.",
                 tags = listOf("sound-based", "lure"),
                 related = listOf("id-2"),
+                image = "QUJD",
                 createdAt = 1_700_000_000_000L,
                 updatedAt = 1_700_000_100_000L,
                 status = "active"

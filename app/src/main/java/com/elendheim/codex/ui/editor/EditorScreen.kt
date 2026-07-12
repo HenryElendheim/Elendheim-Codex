@@ -146,6 +146,10 @@ fun EditorScreen(
                 minLines = 3
             )
 
+            // One optional image, a sketch or reference.
+            SectionLabel(text = "Image", modifier = Modifier.padding(top = 16.dp))
+            ImageEditor(image = current.image, onChange = { draft = current.copy(image = it) })
+
             // Structured ability rows.
             AbilityEditor(
                 abilities = current.abilities,
@@ -195,4 +199,5 @@ fun EditorScreen(
 private fun hasContent(e: Entity): Boolean =
     e.name.isNotBlank() || e.summary.isNotBlank() || e.description.isNotBlank() ||
         e.abilities.isNotEmpty() || e.weaknesses.isNotEmpty() ||
-        e.containment.isNotBlank() || e.notes.isNotBlank() || e.tags.isNotEmpty()
+        e.containment.isNotBlank() || e.notes.isNotBlank() || e.tags.isNotEmpty() ||
+        e.image.isNotBlank()
