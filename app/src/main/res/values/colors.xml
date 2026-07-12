@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base tones for the launch screen and system bars. Dark first. -->
+    <color name="codex_black">#0E0E10</color>
+    <color name="codex_red">#C4383A</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The archive is meant to be moved by hand through export and import, so we do
+     not rely on cloud auto backup. This is intentionally empty. -->
+<full-backup-content>
+</full-backup-content>

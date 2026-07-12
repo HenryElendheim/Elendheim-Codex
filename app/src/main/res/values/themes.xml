@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app draws its real colours in Compose. This base theme only sets the
+         window background and status bar so the first frame is already dark,
+         no white flash on launch. -->
+    <style name="Theme.ElendheimCodex" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/codex_black</item>
+        <item name="android:statusBarColor">@color/codex_black</item>
+        <item name="android:navigationBarColor">@color/codex_black</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
