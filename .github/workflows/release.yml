@@ -33,8 +33,9 @@ jobs:
       - name: Work out the version and release notes
         id: meta
         run: |
-          # Read the friendly version name straight from the build file.
-          VERSION=$(grep -m1 'versionName' app/build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
+          # Read the friendly version name straight from the build file. Match only the
+          # assignment, for example versionName = "1.1", not the nearby comment line.
+          VERSION=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           # Pull the notes for the newest version, the first block in RELEASES.md.
           awk '/^## /{c++} c==1{print} c==2{exit}' RELEASES.md > release_notes.md
