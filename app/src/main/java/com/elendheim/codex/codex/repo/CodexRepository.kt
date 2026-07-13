@@ -79,6 +79,26 @@ class CodexRepository(private val dao: CodexDao) {
     // Hard delete, only reached from the archive behind a confirm.
     suspend fun deleteForever(id: String) = dao.deleteEntity(id)
 
+    // Make a copy of an existing dossier as a fresh entry. The copy gets a brand new
+    // id and the next free designation, its name is marked as a copy, and it starts
+    // active. Handy for building variants without retyping everything. Returns the new
+    // id, or null if the source is gone.
+    suspend fun duplicate(id: String): String? {
+        val source = dao.getEntity(id)?.toDomain() ?: return null
+        val stamp = now()
+        val copy = source.copy(
+            id = UUID.randomUUID().toString(),
+            designation = nextDesignation(),
+            name = (source.name.ifBlank { "Unnamed" } + " (copy)"),
+            related = emptyList(),   // links point at the original, not carried over
+            createdAt = stamp,
+            updatedAt = stamp,
+            status = "active"
+        )
+        dao.upsertEntity(copy.toRecord())
+        return copy.id
+    }
+
     suspend fun saveClasses(list: List<EntityClass>) {
         dao.clearClasses()
         dao.upsertClasses(list.mapIndexed { index, c -> c.toRecord(index) })

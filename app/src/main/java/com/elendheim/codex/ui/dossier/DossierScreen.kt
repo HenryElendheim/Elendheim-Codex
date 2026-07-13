@@ -1,5 +1,6 @@
 package com.elendheim.codex.ui.dossier
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,12 +41,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,6 +62,7 @@ import com.elendheim.codex.ui.components.ClassChip
 import com.elendheim.codex.ui.components.RichCodexText
 import com.elendheim.codex.ui.components.SectionLabel
 import com.elendheim.codex.ui.components.ThreatPips
+import kotlinx.coroutines.launch
 
 // The reading view. Renders one dossier like a classified file: header, description,
 // powers, how to beat it, containment, notes, tags and links to related entries.
@@ -79,6 +83,10 @@ fun DossierScreen(
 
     // Lookup from designation to entity so [ELD-007] style links can resolve.
     val byDesignation = byId.values.associateBy { it.designation }
+
+    // Needed for the share sheet and for opening the duplicate after it is made.
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var menuOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -113,6 +121,31 @@ fun DossierScreen(
                             Icon(Icons.Filled.MoreVert, contentDescription = "More")
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            // Share this one dossier as readable text through the system
+                            // share sheet.
+                            DropdownMenuItem(
+                                text = { Text("Share as text") },
+                                onClick = {
+                                    menuOpen = false
+                                    val send = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TITLE, "${entity.designation} ${entity.name}".trim())
+                                        putExtra(Intent.EXTRA_TEXT, vm.shareTextFor(entity))
+                                    }
+                                    context.startActivity(Intent.createChooser(send, "Share entry"))
+                                }
+                            )
+                            // Make a copy as a new entry, then open the copy.
+                            DropdownMenuItem(
+                                text = { Text("Duplicate") },
+                                onClick = {
+                                    menuOpen = false
+                                    scope.launch {
+                                        val newId = vm.duplicate(entity.id)
+                                        if (newId != null) onOpenRelated(newId)
+                                    }
+                                }
+                            )
                             if (entity.status == "active") {
                                 DropdownMenuItem(
                                     text = { Text("Move to archive") },

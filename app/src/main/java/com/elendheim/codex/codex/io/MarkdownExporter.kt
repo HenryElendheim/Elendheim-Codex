@@ -2,6 +2,7 @@ package com.elendheim.codex.codex.io
 
 import com.elendheim.codex.codex.model.CodexExport
 import com.elendheim.codex.codex.model.Entity
+import com.elendheim.codex.codex.model.EntityClass
 
 // The human copy of the archive. JSON is the machine truth for import and export,
 // this writes one readable Markdown document with every dossier laid out so it can
@@ -28,6 +29,15 @@ object MarkdownExporter {
                 sb.appendLine()
             }
 
+        return sb.toString().trimEnd() + "\n"
+    }
+
+    // Render a single dossier on its own. Used by the share action so one entry can be
+    // sent as clean, readable text.
+    fun renderOne(entity: Entity, classes: List<EntityClass>): String {
+        val labelByKey = classes.associate { it.key to it.label }
+        val sb = StringBuilder()
+        renderEntity(sb, entity, labelByKey)
         return sb.toString().trimEnd() + "\n"
     }
 

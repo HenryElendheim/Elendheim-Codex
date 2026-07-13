@@ -11,6 +11,7 @@ import com.elendheim.codex.ui.archive.ArchiveScreen
 import com.elendheim.codex.ui.dossier.DossierScreen
 import com.elendheim.codex.ui.editor.EditorScreen
 import com.elendheim.codex.ui.index.IndexScreen
+import com.elendheim.codex.ui.overview.OverviewScreen
 import com.elendheim.codex.ui.settings.ClassesScreen
 import com.elendheim.codex.ui.settings.SettingsScreen
 
@@ -22,6 +23,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val CLASSES = "classes"
     const val ARCHIVE = "archive"
+    const val OVERVIEW = "overview"
 
     fun dossier(id: String) = "dossier/$id"
     fun editor(id: String) = "editor/$id"   // pass "new" to create a fresh dossier
@@ -40,7 +42,8 @@ fun CodexNavHost(vm: CodexViewModel) {
                 vm = vm,
                 onOpen = { id -> nav.navigate(Routes.dossier(id)) },
                 onCreate = { nav.navigate(Routes.editor("new")) },
-                onSettings = { nav.navigate(Routes.SETTINGS) }
+                onSettings = { nav.navigate(Routes.SETTINGS) },
+                onOverview = { nav.navigate(Routes.OVERVIEW) }
             )
         }
 
@@ -89,6 +92,10 @@ fun CodexNavHost(vm: CodexViewModel) {
                 onBack = { nav.popBackStack() },
                 onOpen = { id -> nav.navigate(Routes.dossier(id)) }
             )
+        }
+
+        composable(Routes.OVERVIEW) {
+            OverviewScreen(vm = vm, onBack = { nav.popBackStack() })
         }
     }
 }

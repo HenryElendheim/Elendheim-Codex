@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -65,7 +66,8 @@ fun IndexScreen(
     vm: CodexViewModel,
     onOpen: (String) -> Unit,
     onCreate: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onOverview: () -> Unit
 ) {
     val entities by vm.visibleEntities.collectAsState()
     val classes by vm.classes.collectAsState()
@@ -113,6 +115,10 @@ fun IndexScreen(
                         )
                     }) {
                         Icon(Icons.Outlined.FileUpload, contentDescription = "Export archive")
+                    }
+                    // A quick overview of the whole archive: counts and simple bars.
+                    IconButton(onClick = onOverview) {
+                        Icon(Icons.Filled.BarChart, contentDescription = "Overview")
                     }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")

@@ -149,6 +149,17 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
     fun restore(id: String) { viewModelScope.launch { repo.restoreEntity(id); message.value = "Restored" } }
     fun deleteForever(id: String) { viewModelScope.launch { repo.deleteForever(id); message.value = "Deleted for good" } }
 
+    // Make a copy of a dossier and return the new id so the caller can open it.
+    suspend fun duplicate(id: String): String? {
+        val newId = repo.duplicate(id)
+        message.value = if (newId != null) "Copied" else "Could not copy"
+        return newId
+    }
+
+    // Build the readable text for a single dossier, used by the share action.
+    fun shareTextFor(entity: Entity): String =
+        MarkdownExporter.renderOne(entity, classes.value)
+
     // Settings actions.
     fun saveClasses(list: List<EntityClass>) { viewModelScope.launch { repo.saveClasses(list) } }
     fun setPrefix(value: String) { viewModelScope.launch { repo.setDesignationPrefix(value) } }

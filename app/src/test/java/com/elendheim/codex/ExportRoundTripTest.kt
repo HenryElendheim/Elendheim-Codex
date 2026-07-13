@@ -100,4 +100,16 @@ class ExportRoundTripTest {
         assertTrue(md.contains("True Silence"))
         assertTrue(md.contains("How to beat it"))
     }
+
+    // Sharing a single entry renders just that dossier, with its class label resolved.
+    @Test
+    fun renderOneContainsOnlyThatEntry() {
+        val archive = sampleArchive()
+        val one = archive.entities.first()
+        val md = MarkdownExporter.renderOne(one, archive.classes)
+        assertTrue(md.contains("The Hollow Chorister"))
+        assertTrue(md.contains("Unbound"))
+        // The other entry must not leak into a single share.
+        assertTrue(!md.contains("Pale Cartographer"))
+    }
 }

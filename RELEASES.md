@@ -1,5 +1,22 @@
 # Releases
 
+## Elendheim Codex v1.2
+
+The same private archive, now easier to get around and share.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: an overview screen with counts and simple bars for how your
+entries spread across classes and threat levels, share any single entry as readable
+text, and duplicate an entry to build variants without retyping.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.1
 
 The same private archive, with a few things that make it nicer to use.
