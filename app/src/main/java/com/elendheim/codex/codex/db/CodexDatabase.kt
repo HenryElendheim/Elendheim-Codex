@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // describes, so if the two ever disagree in design, the export format wins.
 @Database(
     entities = [EntityRecord::class, ClassRecord::class, SettingRecord::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -31,6 +31,15 @@ abstract class CodexDatabase : RoomDatabase() {
             }
         }
 
+        // Version 3 added the images gallery column. The list is stored as JSON text,
+        // and an empty default reads back as an empty list, so old rows are untouched
+        // and still show their single image through the fallback in the model.
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE entities ADD COLUMN images TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         // Standard single instance pattern so the whole app shares one connection.
         fun get(context: Context): CodexDatabase =
             instance ?: synchronized(this) {
@@ -38,7 +47,7 @@ abstract class CodexDatabase : RoomDatabase() {
                     context.applicationContext,
                     CodexDatabase::class.java,
                     "elendheim-codex.db"
-                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
             }
     }
 }

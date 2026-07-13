@@ -23,8 +23,17 @@ data class Entity(
 
     val tags: List<String> = emptyList(), // freeform labels, for example sound-based
     val related: List<String> = emptyList(), // ids of linked entities
-    val image: String = "",               // one optional sketch, JPEG stored as base64
+    // Legacy single image, kept so files from older versions still load. New entries
+    // use the images list below and mirror its first item here for old readers.
+    val image: String = "",               // JPEG stored as base64
+    val images: List<String> = emptyList(), // the gallery, each a base64 JPEG, first is cover
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     val status: String = "active"         // active or archived, archived is a soft delete
 )
+
+// The pictures to actually show for an entry. New entries fill images, older ones and
+// files from before the gallery existed only have the single image, so fall back to
+// that. This keeps one source of truth for the UI without touching stored data.
+fun Entity.effectiveImages(): List<String> =
+    images.ifEmpty { if (image.isNotBlank()) listOf(image) else emptyList() }

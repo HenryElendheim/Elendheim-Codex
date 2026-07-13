@@ -57,6 +57,7 @@ import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
 import com.elendheim.codex.codex.model.Weakness
+import com.elendheim.codex.codex.model.effectiveImages
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.ClassChip
 import com.elendheim.codex.ui.components.RichCodexText
@@ -216,13 +217,14 @@ fun DossierScreen(
                 )
             }
 
-            // The optional image, decoded once and shown full width.
-            if (entity.image.isNotBlank()) {
-                val bitmap = remember(entity.image) { ImageCodec.toBitmap(entity.image) }
+            // The images, the cover first and any extra ones below it, each full width.
+            val gallery = entity.effectiveImages()
+            gallery.forEachIndexed { index, img ->
+                val bitmap = remember(img) { ImageCodec.toBitmap(img) }
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Image for ${entity.name}",
+                        contentDescription = "Image ${index + 1} for ${entity.name}",
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxWidth()

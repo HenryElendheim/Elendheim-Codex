@@ -25,6 +25,7 @@ data class EntityRecord(
     val tags: List<String>,
     val related: List<String>,
     val image: String,
+    val images: List<String>,
     val createdAt: Long,
     val updatedAt: Long,
     val status: String
@@ -46,6 +47,7 @@ fun EntityRecord.toDomain(): DomainEntity = DomainEntity(
     tags = tags,
     related = related,
     image = image,
+    images = images,
     createdAt = createdAt,
     updatedAt = updatedAt,
     status = status
@@ -67,6 +69,7 @@ fun DomainEntity.toRecord(): EntityRecord = EntityRecord(
     tags = tags,
     related = related,
     image = image,
+    images = images,
     createdAt = createdAt,
     updatedAt = updatedAt,
     status = status

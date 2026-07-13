@@ -7,6 +7,7 @@ import com.elendheim.codex.codex.model.CodexExport
 import com.elendheim.codex.codex.model.Defaults
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.Weakness
+import com.elendheim.codex.codex.model.effectiveImages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -99,6 +100,20 @@ class ExportRoundTripTest {
         assertTrue(md.contains("Chorus Pull"))
         assertTrue(md.contains("True Silence"))
         assertTrue(md.contains("How to beat it"))
+    }
+
+    // An old entry with only the single image field still shows that image through the
+    // gallery fallback, and a new entry's gallery takes priority over the legacy field.
+    @Test
+    fun imageFallbackAndGalleryPriority() {
+        val legacy = Entity(id = "a", image = "AAA")
+        assertEquals(listOf("AAA"), legacy.effectiveImages())
+
+        val gallery = Entity(id = "b", image = "AAA", images = listOf("X", "Y"))
+        assertEquals(listOf("X", "Y"), gallery.effectiveImages())
+
+        val none = Entity(id = "c")
+        assertTrue(none.effectiveImages().isEmpty())
     }
 
     // Sharing a single entry renders just that dossier, with its class label resolved.

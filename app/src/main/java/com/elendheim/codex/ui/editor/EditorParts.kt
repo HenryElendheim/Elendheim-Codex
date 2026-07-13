@@ -319,7 +319,9 @@ fun TagEditor(tags: List<String>, onChange: (List<String>) -> Unit) {
     }
 }
 
-// Pick which other dossiers this one is related to. Tapping a name toggles the link.
+// Pick which other dossiers this one is related to. A search box narrows the list by
+// designation or name, which matters once the archive grows. Already linked entries
+// stay visible whatever the search says, so they are always easy to unlink.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RelatedEditor(selfId: String, selected: List<String>, all: List<Entity>, onChange: (List<String>) -> Unit) {
@@ -333,8 +335,40 @@ fun RelatedEditor(selfId: String, selected: List<String>, all: List<Entity>, onC
         )
         return
     }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        others.forEach { entity ->
+
+    var query by remember { mutableStateOf("") }
+    val q = query.trim().lowercase()
+
+    // Show an entry if it is already linked, or if the search is empty, or if the
+    // search text appears in its designation or name.
+    val visible = others.filter { e ->
+        selected.contains(e.id) || q.isBlank() ||
+            e.designation.lowercase().contains(q) || e.name.lowercase().contains(q)
+    }
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
+        label = { Text("Search by designation or name") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    if (visible.isEmpty()) {
+        Text(
+            text = "No matches.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        return
+    }
+
+    FlowRow(
+        modifier = Modifier.padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        visible.forEach { entity ->
             val isSelected = selected.contains(entity.id)
             Row(
                 modifier = Modifier
@@ -357,17 +391,15 @@ fun RelatedEditor(selfId: String, selected: List<String>, all: List<Entity>, onC
     }
 }
 
-// Pick, preview and remove the one optional image for a dossier. The picked image is
-// downscaled and stored as base64 on a background thread, so a big photo never blocks
-// the screen and never bloats the file.
+// Pick, preview, reorder and remove the images for a dossier. The first image is the
+// cover, the rest sit below as extra visual info. Each picked image is downscaled and
+// stored as base64 on a background thread, so a big photo never blocks the screen and
+// never bloats the file.
 @Composable
-fun ImageEditor(image: String, onChange: (String) -> Unit) {
+fun GalleryEditor(images: List<String>, onChange: (List<String>) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
-
-    // Decode the stored image once per value for the preview.
-    val bitmap = remember(image) { com.elendheim.codex.codex.io.ImageCodec.toBitmap(image) }
 
     val picker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
@@ -378,31 +410,53 @@ fun ImageEditor(image: String, onChange: (String) -> Unit) {
                 val encoded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     com.elendheim.codex.codex.io.ImageCodec.fromUri(context.contentResolver, uri)
                 }
-                if (encoded != null) onChange(encoded)
+                // A newly added image goes to the end. The first image stays the cover.
+                if (encoded != null) onChange(images + encoded)
                 busy = false
             }
         }
     }
 
     Column(modifier = Modifier.padding(top = 8.dp)) {
-        if (bitmap != null) {
-            androidx.compose.foundation.Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Entry image",
-                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 260.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-            Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) { Text("Replace") }
-                OutlinedButton(onClick = { onChange("") }, enabled = !busy) { Text("Remove") }
+        images.forEachIndexed { index, img ->
+            // Decode each stored image once per value for its preview.
+            val bitmap = remember(img) { com.elendheim.codex.codex.io.ImageCodec.toBitmap(img) }
+            Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                Text(
+                    text = if (index == 0) "First image (cover)" else "Image ${index + 1}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace
+                )
+                if (bitmap != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Entry image ${index + 1}",
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 260.dp)
+                            .padding(top = 4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                }
+                Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Promote any later image to be the cover.
+                    if (index > 0) {
+                        OutlinedButton(onClick = { onChange(images.moveToFront(index)) }, enabled = !busy) {
+                            Text("Set as first")
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { onChange(images.toMutableList().apply { removeAt(index) }) },
+                        enabled = !busy
+                    ) { Text("Remove") }
+                }
             }
-        } else {
-            OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) {
-                Text(if (busy) "Adding..." else "Add an image")
-            }
+        }
+
+        OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) {
+            Text(if (busy) "Adding..." else if (images.isEmpty()) "Add an image" else "Add another image")
         }
     }
 }
@@ -414,4 +468,10 @@ private fun <T> List<T>.replaceAt(index: Int, value: T): List<T> =
 private fun <T> List<T>.swap(a: Int, b: Int): List<T> {
     if (a < 0 || b < 0 || a >= size || b >= size) return this
     return toMutableList().also { val tmp = it[a]; it[a] = it[b]; it[b] = tmp }
+}
+
+// Move the item at index to the front, keeping the order of everything else.
+private fun <T> List<T>.moveToFront(index: Int): List<T> {
+    if (index <= 0 || index >= size) return this
+    return toMutableList().also { val item = it.removeAt(index); it.add(0, item) }
 }

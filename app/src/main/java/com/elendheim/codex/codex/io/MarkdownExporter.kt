@@ -3,6 +3,7 @@ package com.elendheim.codex.codex.io
 import com.elendheim.codex.codex.model.CodexExport
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
+import com.elendheim.codex.codex.model.effectiveImages
 
 // The human copy of the archive. JSON is the machine truth for import and export,
 // this writes one readable Markdown document with every dossier laid out so it can
@@ -48,9 +49,11 @@ object MarkdownExporter {
         sb.appendLine("- Class: $classLabel")
         sb.appendLine("- Threat: ${e.threat} of 5")
         if (e.status != "active") sb.appendLine("- Status: ${e.status}")
-        // The readable copy just notes an image exists, the picture itself stays in
-        // the JSON export as base64.
-        if (e.image.isNotBlank()) sb.appendLine("- Image: attached")
+        // The readable copy just notes how many images exist, the pictures themselves
+        // stay in the JSON export as base64.
+        val imageCount = e.effectiveImages().size
+        if (imageCount == 1) sb.appendLine("- Images: 1 attached")
+        else if (imageCount > 1) sb.appendLine("- Images: $imageCount attached")
         if (e.summary.isNotBlank()) {
             sb.appendLine()
             sb.appendLine("_${e.summary.plainText()}_")

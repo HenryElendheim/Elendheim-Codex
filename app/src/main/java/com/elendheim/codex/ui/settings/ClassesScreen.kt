@@ -26,10 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,20 +44,30 @@ import com.elendheim.codex.ui.components.parseHex
 import java.util.UUID
 
 // Manage the classification scheme. It is entirely user defined, so the tiers, their
-// colours and their meanings are all editable here. Changes save as you make them.
+// colours and their meanings are all editable here. Edits are saved when you leave
+// this screen, so typing a label or colour is never interrupted.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
     val stored by vm.classes.collectAsState()
 
-    // Work on a local editable copy, then push the whole list to the ViewModel on any
-    // change. Simple and safe for a short list like this.
-    var working by remember(stored) { mutableStateOf(stored) }
-
-    fun commit(newList: List<EntityClass>) {
-        working = newList
-        vm.saveClasses(newList)
+    // Edit a local copy so typing is smooth. We seed it once when the classes first
+    // arrive, then never overwrite it, so a save can never echo back and steal focus
+    // mid word. The copy is written to storage only when leaving the screen.
+    var working by remember { mutableStateOf<List<EntityClass>?>(null) }
+    LaunchedEffect(stored) {
+        if (working == null && stored.isNotEmpty()) working = stored
     }
+
+    // Save on the way out, so edits are kept but never applied while still typing.
+    val latest by rememberUpdatedState(working)
+    DisposableEffect(Unit) {
+        onDispose { latest?.let { vm.saveClasses(it) } }
+    }
+
+    // Until the local copy is seeded, show what is stored. All edits go to the copy.
+    val list = working ?: stored
+    fun update(newList: List<EntityClass>) { working = newList }
 
     Scaffold(
         topBar = {
@@ -74,7 +87,7 @@ fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
                             colorHex = "#9A9AA2",
                             meaning = ""
                         )
-                        commit(working + fresh)
+                        update(list + fresh)
                     }) {
                         Icon(Icons.Filled.Add, contentDescription = "Add tier")
                     }
@@ -101,11 +114,11 @@ fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
                 modifier = Modifier.padding(top = 12.dp)
             )
 
-            working.forEachIndexed { index, cls ->
+            list.forEachIndexed { index, cls ->
                 ClassCard(
                     cls = cls,
-                    onChange = { updated -> commit(working.toMutableList().also { it[index] = updated }) },
-                    onRemove = { commit(working.toMutableList().also { it.removeAt(index) }) }
+                    onChange = { updated -> update(list.toMutableList().also { it[index] = updated }) },
+                    onRemove = { update(list.toMutableList().also { it.removeAt(index) }) }
                 )
             }
 

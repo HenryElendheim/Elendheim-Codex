@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elendheim.codex.codex.model.Entity
+import com.elendheim.codex.codex.model.effectiveImages
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.SectionLabel
 
@@ -146,9 +147,14 @@ fun EditorScreen(
                 minLines = 3
             )
 
-            // One optional image, a sketch or reference.
-            SectionLabel(text = "Image", modifier = Modifier.padding(top = 16.dp))
-            ImageEditor(image = current.image, onChange = { draft = current.copy(image = it) })
+            // Images: a cover plus any extra visual info added lower down.
+            SectionLabel(text = "Images", modifier = Modifier.padding(top = 16.dp))
+            GalleryEditor(
+                images = current.effectiveImages(),
+                // Keep the legacy single image in step with the first gallery image so
+                // older app versions and old export readers still see a picture.
+                onChange = { list -> draft = current.copy(images = list, image = list.firstOrNull() ?: "") }
+            )
 
             // Structured ability rows.
             AbilityEditor(
@@ -200,4 +206,4 @@ private fun hasContent(e: Entity): Boolean =
     e.name.isNotBlank() || e.summary.isNotBlank() || e.description.isNotBlank() ||
         e.abilities.isNotEmpty() || e.weaknesses.isNotEmpty() ||
         e.containment.isNotBlank() || e.notes.isNotBlank() || e.tags.isNotEmpty() ||
-        e.image.isNotBlank()
+        e.effectiveImages().isNotEmpty()
