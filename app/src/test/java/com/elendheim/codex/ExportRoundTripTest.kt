@@ -102,6 +102,20 @@ class ExportRoundTripTest {
         assertTrue(md.contains("How to beat it"))
     }
 
+    // The history log survives a full round trip, and the default prefix is ELND.
+    @Test
+    fun storyRoundTripsAndDefaultPrefix() {
+        val e = Entity(
+            id = "s1",
+            designation = "ELND-001",
+            name = "Flicker",
+            story = listOf(com.elendheim.codex.codex.model.StoryEntry("First noticed", "Day one", "Near the %%old room%%."))
+        )
+        val back = CodexFiles.decode(CodexFiles.encode(CodexExport(entities = listOf(e))))
+        assertEquals(e, back.entities.first())
+        assertEquals("ELND", Defaults.designationPrefix)
+    }
+
     // An old entry with only the single image field still shows that image through the
     // gallery fallback, and a new entry's gallery takes priority over the legacy field.
     @Test

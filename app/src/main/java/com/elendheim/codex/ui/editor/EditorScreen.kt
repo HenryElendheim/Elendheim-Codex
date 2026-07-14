@@ -182,6 +182,12 @@ fun EditorScreen(
                 minLines = 2
             )
 
+            // History log: past events involving this entity.
+            StoryEditor(
+                story = current.story,
+                onChange = { draft = current.copy(story = it) }
+            )
+
             // Tags.
             SectionLabel(text = "Tags", modifier = Modifier.padding(top = 16.dp))
             TagEditor(tags = current.tags, onChange = { draft = current.copy(tags = it) })
@@ -206,4 +212,4 @@ private fun hasContent(e: Entity): Boolean =
     e.name.isNotBlank() || e.summary.isNotBlank() || e.description.isNotBlank() ||
         e.abilities.isNotEmpty() || e.weaknesses.isNotEmpty() ||
         e.containment.isNotBlank() || e.notes.isNotBlank() || e.tags.isNotEmpty() ||
-        e.effectiveImages().isNotEmpty()
+        e.story.isNotEmpty() || e.effectiveImages().isNotEmpty()

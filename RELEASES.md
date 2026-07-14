@@ -1,5 +1,24 @@
 # Releases
 
+## Elendheim Codex v1.4
+
+A bigger update. The archive now holds history, and it can be made your own.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: a history log on every entry for past events, with redactions.
+You can rename the archive to run your own sorting system, and there is a new
+accessibility screen for text size, high contrast and reduced motion. Fresh installs
+start with three simple example entries you can rename or delete, and new entries are
+numbered ELND by default.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.3
 
 The same private archive, with a smoother editor and richer entries.

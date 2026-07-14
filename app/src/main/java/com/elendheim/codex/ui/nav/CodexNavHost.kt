@@ -12,6 +12,7 @@ import com.elendheim.codex.ui.dossier.DossierScreen
 import com.elendheim.codex.ui.editor.EditorScreen
 import com.elendheim.codex.ui.index.IndexScreen
 import com.elendheim.codex.ui.overview.OverviewScreen
+import com.elendheim.codex.ui.settings.AccessibilityScreen
 import com.elendheim.codex.ui.settings.ClassesScreen
 import com.elendheim.codex.ui.settings.SettingsScreen
 
@@ -24,6 +25,7 @@ object Routes {
     const val CLASSES = "classes"
     const val ARCHIVE = "archive"
     const val OVERVIEW = "overview"
+    const val ACCESSIBILITY = "accessibility"
 
     fun dossier(id: String) = "dossier/$id"
     fun editor(id: String) = "editor/$id"   // pass "new" to create a fresh dossier
@@ -78,8 +80,13 @@ fun CodexNavHost(vm: CodexViewModel) {
                 vm = vm,
                 onBack = { nav.popBackStack() },
                 onManageClasses = { nav.navigate(Routes.CLASSES) },
-                onOpenArchive = { nav.navigate(Routes.ARCHIVE) }
+                onOpenArchive = { nav.navigate(Routes.ARCHIVE) },
+                onOpenAccessibility = { nav.navigate(Routes.ACCESSIBILITY) }
             )
+        }
+
+        composable(Routes.ACCESSIBILITY) {
+            AccessibilityScreen(vm = vm, onBack = { nav.popBackStack() })
         }
 
         composable(Routes.CLASSES) {

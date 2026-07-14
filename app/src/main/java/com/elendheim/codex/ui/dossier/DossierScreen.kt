@@ -56,6 +56,7 @@ import com.elendheim.codex.codex.io.ImageCodec
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
+import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveImages
 import com.elendheim.codex.ui.CodexViewModel
@@ -250,6 +251,12 @@ fun DossierScreen(
             TextSection("Containment", entity.containment, byDesignation, redact, onOpenRelated)
             TextSection("Notes", entity.notes, byDesignation, redact, onOpenRelated)
 
+            // The history log: past events, each its own block, redactions and all.
+            if (entity.story.isNotEmpty()) {
+                SectionLabel(text = "History", modifier = Modifier.padding(top = 20.dp))
+                entity.story.forEach { StoryBlock(it, byDesignation, redact, onOpenRelated) }
+            }
+
             if (entity.tags.isNotEmpty()) {
                 SectionLabel(text = "Tags", modifier = Modifier.padding(top = 20.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -332,6 +339,46 @@ private fun AbilityBlock(ability: Ability, byDesignation: Map<String, Entity>, r
         }
         if (ability.limits.isNotBlank()) {
             LabeledLine("Limits", ability.limits, byDesignation, redact, onOpen)
+        }
+    }
+}
+
+// One history event rendered as a titled block: title, optional time label, body.
+@Composable
+private fun StoryBlock(entry: StoryEntry, byDesignation: Map<String, Entity>, redact: Boolean, onOpen: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = entry.title.ifBlank { "Untitled event" },
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (entry.period.isNotBlank()) {
+                Text(
+                    text = entry.period,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+        }
+        if (entry.body.isNotBlank()) {
+            RichCodexText(
+                text = entry.body,
+                byDesignation = byDesignation,
+                redact = redact,
+                onOpen = onOpen,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(top = 6.dp)
+            )
         }
     }
 }

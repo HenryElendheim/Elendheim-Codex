@@ -3,6 +3,7 @@ package com.elendheim.codex.codex.db
 import androidx.room.TypeConverter
 import com.elendheim.codex.codex.io.CodexJson
 import com.elendheim.codex.codex.model.Ability
+import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -30,6 +31,15 @@ class Converters {
     fun jsonToWeaknesses(value: String): List<Weakness> =
         if (value.isBlank()) emptyList()
         else CodexJson.format.decodeFromString(ListSerializer(Weakness.serializer()), value)
+
+    @TypeConverter
+    fun storyToJson(value: List<StoryEntry>): String =
+        CodexJson.format.encodeToString(ListSerializer(StoryEntry.serializer()), value)
+
+    @TypeConverter
+    fun jsonToStory(value: String): List<StoryEntry> =
+        if (value.isBlank()) emptyList()
+        else CodexJson.format.decodeFromString(ListSerializer(StoryEntry.serializer()), value)
 
     @TypeConverter
     fun stringsToJson(value: List<String>): String =

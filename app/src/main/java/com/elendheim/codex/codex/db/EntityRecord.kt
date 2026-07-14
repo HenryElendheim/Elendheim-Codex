@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity as DomainEntity
+import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 
 // The Room row for one dossier. It mirrors the domain Entity but keeps its lists as
@@ -22,6 +23,7 @@ data class EntityRecord(
     val weaknesses: List<Weakness>,
     val containment: String,
     val notes: String,
+    val story: List<StoryEntry>,
     val tags: List<String>,
     val related: List<String>,
     val image: String,
@@ -44,6 +46,7 @@ fun EntityRecord.toDomain(): DomainEntity = DomainEntity(
     weaknesses = weaknesses,
     containment = containment,
     notes = notes,
+    story = story,
     tags = tags,
     related = related,
     image = image,
@@ -66,6 +69,7 @@ fun DomainEntity.toRecord(): EntityRecord = EntityRecord(
     weaknesses = weaknesses,
     containment = containment,
     notes = notes,
+    story = story,
     tags = tags,
     related = related,
     image = image,

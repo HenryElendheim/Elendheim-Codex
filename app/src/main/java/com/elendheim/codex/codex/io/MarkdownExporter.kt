@@ -98,6 +98,17 @@ object MarkdownExporter {
             sb.appendLine(e.notes.plainText())
         }
 
+        if (e.story.isNotEmpty()) {
+            sb.appendLine()
+            sb.appendLine("### History")
+            e.story.forEach { s ->
+                sb.appendLine()
+                val head = listOf(s.title, s.period).filter { it.isNotBlank() }.joinToString(" - ")
+                sb.appendLine("**${head.ifBlank { "Untitled event" }}**")
+                if (s.body.isNotBlank()) sb.appendLine(s.body.plainText())
+            }
+        }
+
         if (e.tags.isNotEmpty()) {
             sb.appendLine()
             sb.appendLine("Tags: ${e.tags.joinToString(", ")}")

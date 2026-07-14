@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
+import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.ui.components.ClassChip
 
@@ -190,6 +191,49 @@ fun WeaknessEditor(weaknesses: List<Weakness>, onChange: (List<Weakness>) -> Uni
                     options = severities,
                     onSelect = { v -> onChange(weaknesses.replaceAt(index, weakness.copy(severity = v))) }
                 )
+            }
+        }
+    }
+}
+
+// Add, edit, remove and reorder the history log entries. Each is a past event, with
+// a title, an optional time label and a freeform body that supports redaction and
+// [links] like the other text fields.
+@Composable
+fun StoryEditor(story: List<StoryEntry>, onChange: (List<StoryEntry>) -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "HISTORY",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            TextButton(onClick = { onChange(story + StoryEntry()) }) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text("Add")
+            }
+        }
+        Text(
+            text = "Past events involving this entity. Wrap text in %% to redact it.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        story.forEachIndexed { index, entry ->
+            RowCard(
+                index = index,
+                count = story.size,
+                onRemove = { onChange(story.toMutableList().apply { removeAt(index) }) },
+                onMoveUp = { onChange(story.swap(index, index - 1)) },
+                onMoveDown = { onChange(story.swap(index, index + 1)) }
+            ) {
+                EditorField("Title", entry.title, { v -> onChange(story.replaceAt(index, entry.copy(title = v))) }, singleLine = true)
+                EditorField("When", entry.period, { v -> onChange(story.replaceAt(index, entry.copy(period = v))) }, singleLine = true)
+                EditorField("What happened", entry.body, { v -> onChange(story.replaceAt(index, entry.copy(body = v))) }, minLines = 3)
             }
         }
     }

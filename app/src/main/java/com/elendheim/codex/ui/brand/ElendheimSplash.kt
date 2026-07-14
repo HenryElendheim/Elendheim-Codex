@@ -32,18 +32,20 @@ import kotlinx.coroutines.delay
 // then calls onFinished so the app can move on to the index. Reused across the
 // Elendheim suite so every app opens the same way.
 @Composable
-fun ElendheimSplash(onFinished: () -> Unit) {
+fun ElendheimSplash(reduceMotion: Boolean = false, onFinished: () -> Unit) {
     var shown by remember { mutableStateOf(false) }
+    // With reduce motion on there is no fade, the brand simply shows and then leaves.
     val alpha by animateFloatAsState(
         targetValue = if (shown) 1f else 0f,
-        animationSpec = tween(durationMillis = 600),
+        animationSpec = tween(durationMillis = if (reduceMotion) 0 else 600),
         label = "splashAlpha"
     )
 
-    // Trigger the fade in on first composition, then leave after a short hold.
+    // Trigger the fade in on first composition, then leave after a short hold. The
+    // hold is shorter when motion is reduced so the app opens more directly.
     LaunchedEffect(Unit) {
         shown = true
-        delay(1400)
+        delay(if (reduceMotion) 500L else 1400L)
         onFinished()
     }
 

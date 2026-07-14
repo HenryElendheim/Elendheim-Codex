@@ -11,6 +11,10 @@ object Defaults {
         EntityClass("sovereign", "Sovereign", "#8A2BE2", "Beyond current means to contain. Handle with extreme care.")
     )
 
-    // The prefix used when the app auto numbers a new dossier, for example ELD-014.
-    const val designationPrefix: String = "ELD"
+    // The prefix used when the app auto numbers a new dossier, for example ELND-014.
+    const val designationPrefix: String = "ELND"
+
+    // The name shown at the top of the archive and on the about screen. This is only a
+    // starting point, anyone can rename it in settings to make the app their own.
+    const val archiveName: String = "Elendheim Codex"
 }

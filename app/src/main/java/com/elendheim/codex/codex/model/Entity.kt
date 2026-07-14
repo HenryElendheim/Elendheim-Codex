@@ -20,6 +20,7 @@ data class Entity(
     val weaknesses: List<Weakness> = emptyList(), // structured counters, see below
     val containment: String = "",         // how to hold, neutralise or survive it
     val notes: String = "",               // lore, incidents, open questions
+    val story: List<StoryEntry> = emptyList(), // past events, the history log
 
     val tags: List<String> = emptyList(), // freeform labels, for example sound-based
     val related: List<String> = emptyList(), // ids of linked entities

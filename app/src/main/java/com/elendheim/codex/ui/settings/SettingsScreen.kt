@@ -54,14 +54,17 @@ fun SettingsScreen(
     vm: CodexViewModel,
     onBack: () -> Unit,
     onManageClasses: () -> Unit,
-    onOpenArchive: () -> Unit
+    onOpenArchive: () -> Unit,
+    onOpenAccessibility: () -> Unit
 ) {
     val context = LocalContext.current
     val prefix by vm.designationPrefix.collectAsState()
     val archivedCount by vm.archivedCount.collectAsState()
     val redaction by vm.redactionMode.collectAsState()
+    val archiveName by vm.archiveName.collectAsState()
 
     var prefixInput by remember(prefix) { mutableStateOf(prefix) }
+    var nameInput by remember(archiveName) { mutableStateOf(archiveName) }
     var confirmReplaceUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     // File pickers. Export creates a new file, import opens an existing one.
@@ -146,10 +149,33 @@ fun SettingsScreen(
                 ) { Text("Import and replace everything") }
             }
 
+            // Make it your own. The archive name is what shows at the top of the app,
+            // so anyone can turn this into their own sorting system.
+            SectionLabel(text = "Archive name", modifier = Modifier.padding(top = 28.dp))
+            Text(
+                text = "Shown at the top of the app. Rename it to make this your own.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                OutlinedTextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    label = { Text("Name") }
+                )
+                OutlinedButton(onClick = { vm.setArchiveName(nameInput) }) { Text("Save") }
+            }
+
             // Designation prefix.
             SectionLabel(text = "Designation prefix", modifier = Modifier.padding(top = 28.dp))
             Text(
-                text = "New entries are numbered with this prefix, for example ${prefixInput.ifBlank { "ELD" }}-014.",
+                text = "New entries are numbered with this prefix, for example ${prefixInput.ifBlank { "ELND" }}-014.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -189,7 +215,7 @@ fun SettingsScreen(
                 androidx.compose.material3.Switch(checked = redaction, onCheckedChange = { vm.setRedactionMode(it) })
             }
             Text(
-                text = "Tip: write [${prefixInput.ifBlank { "ELD" }}-007] in any field to make a tap link to that entry.",
+                text = "Tip: write [${prefixInput.ifBlank { "ELND" }}-007] in any field to make a tap link to that entry.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
@@ -198,6 +224,7 @@ fun SettingsScreen(
             // Navigation rows.
             SectionLabel(text = "Archive setup", modifier = Modifier.padding(top = 28.dp))
             SettingsRow(title = "Classification scheme", subtitle = "Name, colour and meaning of your tiers", onClick = onManageClasses)
+            SettingsRow(title = "Accessibility", subtitle = "Text size, contrast and motion", onClick = onOpenAccessibility)
             SettingsRow(
                 title = "Archive",
                 subtitle = if (archivedCount == 0) "No archived entries" else "$archivedCount archived",
@@ -206,7 +233,7 @@ fun SettingsScreen(
 
             // About.
             SectionLabel(text = "About", modifier = Modifier.padding(top = 28.dp))
-            AboutCard()
+            AboutCard(archiveName = archiveName)
 
             Row(modifier = Modifier.padding(bottom = 48.dp)) {}
         }
@@ -253,7 +280,7 @@ private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
 
 // The short, plain about card. What the app is, in one breath.
 @Composable
-private fun AboutCard() {
+private fun AboutCard(archiveName: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -263,7 +290,8 @@ private fun AboutCard() {
             .padding(16.dp)
     ) {
         Text(
-            text = "Elendheim Codex v${BuildConfig.VERSION_NAME}",
+            // Built on Elendheim Codex, but shows the reader's own archive name too.
+            text = "$archiveName - built on Elendheim Codex v${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.Monospace

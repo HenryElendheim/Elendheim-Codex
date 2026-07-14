@@ -53,6 +53,28 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
     val lastExportAt: StateFlow<Long> =
         repo.lastExportAt.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
+    // The archive name shown in the app, editable so anyone can rebrand it.
+    val archiveName: StateFlow<String> =
+        repo.archiveName.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Elendheim Codex")
+
+    fun setArchiveName(name: String) { viewModelScope.launch { repo.setArchiveName(name) } }
+
+    // Accessibility settings. These drive the theme and a couple of animations.
+    val textScale: StateFlow<Float> =
+        repo.textScale.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1.0f)
+
+    fun setTextScale(scale: Float) { viewModelScope.launch { repo.setTextScale(scale) } }
+
+    val highContrast: StateFlow<Boolean> =
+        repo.highContrast.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setHighContrast(on: Boolean) { viewModelScope.launch { repo.setHighContrast(on) } }
+
+    val reduceMotion: StateFlow<Boolean> =
+        repo.reduceMotion.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setReduceMotion(on: Boolean) { viewModelScope.launch { repo.setReduceMotion(on) } }
+
     // The current filter and sort choices, changed by the index controls.
     val filters = MutableStateFlow(IndexFilters())
 

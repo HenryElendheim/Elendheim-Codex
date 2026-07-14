@@ -76,6 +76,7 @@ fun IndexScreen(
     val message by vm.message.collectAsState()
     val byId by vm.entitiesById.collectAsState()
     val lastExport by vm.lastExportAt.collectAsState()
+    val archiveName by vm.archiveName.collectAsState()
 
     // The backup reminder can be waved away for the current session.
     var nudgeDismissed by remember { mutableStateOf(false) }
@@ -100,7 +101,7 @@ fun IndexScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
-                title = { Text("Elendheim Codex") },
+                title = { Text(archiveName) },
                 actions = {
                     // Open a random entry, handy for rediscovering old ideas.
                     IconButton(onClick = { vm.randomEntityId()?.let(onOpen) }) {

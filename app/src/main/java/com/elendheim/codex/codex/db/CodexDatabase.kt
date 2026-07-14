@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // describes, so if the two ever disagree in design, the export format wins.
 @Database(
     entities = [EntityRecord::class, ClassRecord::class, SettingRecord::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,14 @@ abstract class CodexDatabase : RoomDatabase() {
             }
         }
 
+        // Version 4 added the story log column, stored as JSON text like the other
+        // lists. Empty default reads back as an empty log, so old rows are untouched.
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE entities ADD COLUMN story TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         // Standard single instance pattern so the whole app shares one connection.
         fun get(context: Context): CodexDatabase =
             instance ?: synchronized(this) {
@@ -47,7 +55,7 @@ abstract class CodexDatabase : RoomDatabase() {
                     context.applicationContext,
                     CodexDatabase::class.java,
                     "elendheim-codex.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
     }
 }

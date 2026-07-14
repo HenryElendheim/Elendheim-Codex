@@ -20,6 +20,10 @@ class CodexRepository(private val dao: CodexDao) {
         private const val KEY_PREFIX = "designation_prefix"
         private const val KEY_REDACTION = "redaction_mode"
         private const val KEY_LAST_EXPORT = "last_export_at"
+        private const val KEY_ARCHIVE_NAME = "archive_name"
+        private const val KEY_TEXT_SCALE = "text_scale"
+        private const val KEY_HIGH_CONTRAST = "high_contrast"
+        private const val KEY_REDUCE_MOTION = "reduce_motion"
     }
 
     // Live streams the screens observe. Room pushes a new list whenever data changes.
@@ -55,6 +59,48 @@ class CodexRepository(private val dao: CodexDao) {
     // Called by the ViewModel after a successful export so the reminder resets.
     suspend fun recordExport() {
         dao.putSetting(SettingRecord(KEY_LAST_EXPORT, now().toString()))
+    }
+
+    // The archive name shown in the app. Anyone can rename it to make the app their
+    // own sorting system, so it is data rather than a fixed string.
+    val archiveName: Flow<String> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_ARCHIVE_NAME }?.value?.takeIf { it.isNotBlank() }
+                ?: Defaults.archiveName
+        }
+
+    suspend fun setArchiveName(name: String) {
+        dao.putSetting(SettingRecord(KEY_ARCHIVE_NAME, name.trim().ifBlank { Defaults.archiveName }))
+    }
+
+    // Accessibility: a text size multiplier applied to the whole app. Defaults to 1.0.
+    val textScale: Flow<Float> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_TEXT_SCALE }?.value?.toFloatOrNull() ?: 1.0f
+        }
+
+    suspend fun setTextScale(scale: Float) {
+        dao.putSetting(SettingRecord(KEY_TEXT_SCALE, scale.toString()))
+    }
+
+    // Accessibility: a higher contrast palette for readers who want stronger text.
+    val highContrast: Flow<Boolean> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_HIGH_CONTRAST }?.value == "true"
+        }
+
+    suspend fun setHighContrast(on: Boolean) {
+        dao.putSetting(SettingRecord(KEY_HIGH_CONTRAST, if (on) "true" else "false"))
+    }
+
+    // Accessibility: skip the fade animations for readers who prefer less motion.
+    val reduceMotion: Flow<Boolean> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_REDUCE_MOTION }?.value == "true"
+        }
+
+    suspend fun setReduceMotion(on: Boolean) {
+        dao.putSetting(SettingRecord(KEY_REDUCE_MOTION, if (on) "true" else "false"))
     }
 
     suspend fun getEntity(id: String): Entity? = dao.getEntity(id)?.toDomain()
