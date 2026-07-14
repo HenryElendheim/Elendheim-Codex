@@ -40,10 +40,11 @@ class CodexRepository(private val dao: CodexDao) {
         }
 
     // Redaction mode is a display only toggle. Text marked with %% %% shows as solid
-    // blocks when this is on, and the real words are always kept in storage.
+    // blocks when this is on, and the real words are always kept in storage. It is on
+    // by default, so only an explicit "false" that the reader chose turns it off.
     val redactionMode: Flow<Boolean> =
         dao.observeSettings().map { rows ->
-            rows.firstOrNull { it.key == KEY_REDACTION }?.value == "true"
+            rows.firstOrNull { it.key == KEY_REDACTION }?.value != "false"
         }
 
     suspend fun setRedactionMode(on: Boolean) {

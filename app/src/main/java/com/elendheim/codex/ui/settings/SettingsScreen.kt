@@ -67,6 +67,16 @@ fun SettingsScreen(
     var nameInput by remember(archiveName) { mutableStateOf(archiveName) }
     var confirmReplaceUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
+    // A snackbar so pressing Save clearly shows the change went through.
+    val message by vm.message.collectAsState()
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    LaunchedEffect(message) {
+        message?.let {
+            snackbar.showSnackbar(it)
+            vm.clearMessage()
+        }
+    }
+
     // File pickers. Export creates a new file, import opens an existing one.
     val exportJson = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -91,6 +101,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
@@ -289,21 +300,27 @@ private fun AboutCard(archiveName: String) {
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
+        // The reader's own name for their archive, big, with the app version under it.
         Text(
-            // Built on Elendheim Codex, but shows the reader's own archive name too.
-            text = "$archiveName - built on Elendheim Codex v${BuildConfig.VERSION_NAME}",
+            text = archiveName,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.Monospace
         )
         Text(
-            text = "A private archive for your own entities. Write what they are, what they can do and how to beat them, then find them fast and export the whole thing as one file.",
+            text = "Elendheim Codex v${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 2.dp)
         )
         Text(
-            text = "Stays on your device. No accounts, no network. Open source under the MIT license.",
+            text = "A quiet place for the things you make up. Write down what each one is, what it can do, and how it goes down, then find it again in seconds when you need it.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+        Text(
+            text = "It never leaves this phone unless you send it somewhere, and when you do, the whole archive travels as one file that stays yours. Built on the Elendheim suite, open source under the MIT license.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)

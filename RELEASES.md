@@ -1,5 +1,24 @@
 # Releases
 
+## Elendheim Codex v1.5
+
+Small polish to how it looks and feels on first open.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: redaction is on by default and the example entries now show a
+few redactions so you can see the effect straight away. Fresh installs start with a
+fuller set of classification tiers, each example carries a placeholder image, saving
+a name, prefix or classification now shows a clear confirmation, and the about screen
+reads better.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.4
 
 A bigger update. The archive now holds history, and it can be made your own.

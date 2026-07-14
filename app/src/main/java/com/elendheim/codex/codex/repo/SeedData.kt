@@ -7,31 +7,34 @@ import com.elendheim.codex.codex.model.Weakness
 import java.util.UUID
 
 // Three plain example entries written on first run. They are deliberately simple and
-// obvious, each one showing the format with a single ability, a single weakness and a
-// short history note. Every one says clearly that it is an example, so it is easy to
-// rename, edit or delete and start your own archive.
+// obvious, each one showing the format with a single ability, a single weakness, a
+// short history note and a placeholder image. A few phrases are wrapped in %% so the
+// redaction feature is visible right away. Every one says clearly that it is an
+// example, so it is easy to rename, edit or delete and start your own archive.
 object SeedData {
 
     fun entities(): List<Entity> {
         // Fixed base time so the seeds have a sensible order without needing a clock.
         val base = 1_700_000_000_000L
         val note = "This is an example entry to show the format. Rename it, edit it, or delete it whenever you like."
+        val pic = listOf(SeedImages.placeholder)
 
         return listOf(
             Entity(
                 id = UUID.randomUUID().toString(),
                 designation = "ELND-001",
                 name = "Example: The Flicker",
-                classification = "dormant",
+                classification = "clam",
                 threat = 1,
                 summary = "Lights dim and flicker whenever it is near. Harmless so far.",
-                description = "A simple starter example. Nearby lights flicker when it is close, " +
-                    "which makes it easy to notice and easy to track.",
+                description = "A simple starter example. Nearby lights flicker when it is close, which " +
+                    "makes it easy to notice. It was first seen in the %%old archive room%% and has " +
+                    "stayed calm since.",
                 abilities = listOf(
                     Ability(
                         name = "Dim the lights",
                         mechanism = "Weakens nearby electric light while it is within a room.",
-                        limits = "Only affects lights in the same room. Stops the moment it leaves."
+                        limits = "Only affects lights in the same room. Range is about %%four metres%%."
                     )
                 ),
                 weaknesses = listOf(
@@ -53,6 +56,8 @@ object SeedData {
                 ),
                 tags = listOf("example", "lights"),
                 related = emptyList(),
+                image = SeedImages.placeholder,
+                images = pic,
                 createdAt = base,
                 updatedAt = base,
                 status = "active"
@@ -61,11 +66,11 @@ object SeedData {
                 id = UUID.randomUUID().toString(),
                 designation = "ELND-002",
                 name = "Example: The Hollow Door",
-                classification = "stirring",
+                classification = "rekna",
                 threat = 2,
                 summary = "A door that appears on a wall where there was none.",
                 description = "Another simple example. A plain door shows up on a blank wall. It opens, " +
-                    "but there is only a shallow empty space behind it.",
+                    "but there is only a shallow empty space behind it, about %%half a metre deep%%.",
                 abilities = listOf(
                     Ability(
                         name = "Appear",
@@ -92,6 +97,8 @@ object SeedData {
                 ),
                 tags = listOf("example", "spatial"),
                 related = emptyList(),
+                image = SeedImages.placeholder,
+                images = pic,
                 createdAt = base + 1000,
                 updatedAt = base + 1000,
                 status = "active"
@@ -100,11 +107,11 @@ object SeedData {
                 id = UUID.randomUUID().toString(),
                 designation = "ELND-003",
                 name = "Example: The Echo",
-                classification = "dormant",
+                classification = "clam",
                 threat = 1,
                 summary = "Repeats the last thing it hears, a few seconds later.",
                 description = "The last simple example. It waits, then repeats the last sentence it heard " +
-                    "in a flat copy of the speaker's voice.",
+                    "in a flat copy of the speaker's voice. The delay is usually %%about six seconds%%.",
                 abilities = listOf(
                     Ability(
                         name = "Repeat",
@@ -130,6 +137,8 @@ object SeedData {
                 ),
                 tags = listOf("example", "sound"),
                 related = emptyList(),
+                image = SeedImages.placeholder,
+                images = pic,
                 createdAt = base + 2000,
                 updatedAt = base + 2000,
                 status = "active"

@@ -5,10 +5,11 @@ package com.elendheim.codex.codex.model
 // axis from class on purpose: how dangerous is not the same as how hard to contain.
 object Defaults {
     val classes: List<EntityClass> = listOf(
-        EntityClass("dormant", "Dormant", "#5B8C7B", "Known and quiet. Contained or inert for now."),
-        EntityClass("stirring", "Stirring", "#C9A227", "Showing activity. Watch closely, effects are spreading."),
-        EntityClass("unbound", "Unbound", "#C4383A", "Loose and acting on its own. Direct threat."),
-        EntityClass("sovereign", "Sovereign", "#8A2BE2", "Beyond current means to contain. Handle with extreme care.")
+        EntityClass("clam", "Clam", "#5B8C7B", "Known and quiet. Contained or inert for now."),
+        EntityClass("rekna", "Rekna", "#C9A227", "Showing activity. Watch closely, effects are spreading."),
+        EntityClass("rinner", "Rinner", "#C4383A", "Loose and acting on its own. Direct threat."),
+        EntityClass("heimer", "Heimer", "#8A2BE2", "Beyond current means to contain. Handle with extreme care."),
+        EntityClass("neutralized", "Neutralized", "#9A9AA2", "No longer exists. Dead and or gone for good.")
     )
 
     // The prefix used when the app auto numbers a new dossier, for example ELND-014.

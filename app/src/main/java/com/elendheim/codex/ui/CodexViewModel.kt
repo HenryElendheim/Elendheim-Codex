@@ -44,8 +44,9 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
         repo.designationPrefix.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "ELD")
 
     // Whether redaction mode is on. Drives how freeform text renders in the dossier.
+    // On by default, so the initial value matches until the stored value loads.
     val redactionMode: StateFlow<Boolean> =
-        repo.redactionMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+        repo.redactionMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     fun setRedactionMode(on: Boolean) { viewModelScope.launch { repo.setRedactionMode(on) } }
 
@@ -57,7 +58,7 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
     val archiveName: StateFlow<String> =
         repo.archiveName.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Elendheim Codex")
 
-    fun setArchiveName(name: String) { viewModelScope.launch { repo.setArchiveName(name) } }
+    fun setArchiveName(name: String) { viewModelScope.launch { repo.setArchiveName(name); message.value = "Saved" } }
 
     // Accessibility settings. These drive the theme and a couple of animations.
     val textScale: StateFlow<Float> =
@@ -182,9 +183,12 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
     fun shareTextFor(entity: Entity): String =
         MarkdownExporter.renderOne(entity, classes.value)
 
-    // Settings actions.
-    fun saveClasses(list: List<EntityClass>) { viewModelScope.launch { repo.saveClasses(list) } }
-    fun setPrefix(value: String) { viewModelScope.launch { repo.setDesignationPrefix(value) } }
+    // Settings actions. confirm shows a short "Saved" note when the reader pressed a
+    // save control, so it is obvious the change went through.
+    fun saveClasses(list: List<EntityClass>, confirm: Boolean = false) {
+        viewModelScope.launch { repo.saveClasses(list); if (confirm) message.value = "Saved" }
+    }
+    fun setPrefix(value: String) { viewModelScope.launch { repo.setDesignationPrefix(value); message.value = "Saved" } }
 
     // Export the whole archive as JSON to the location the user picked.
     fun exportJson(resolver: ContentResolver, uri: Uri) {

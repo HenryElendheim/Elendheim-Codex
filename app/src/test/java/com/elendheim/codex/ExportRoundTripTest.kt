@@ -25,7 +25,7 @@ class ExportRoundTripTest {
                 id = "id-1",
                 designation = "ELD-001",
                 name = "The Hollow Chorister",
-                classification = "unbound",
+                classification = "rinner",
                 threat = 4,
                 summary = "A choir with no source.",
                 description = "Heard before it is seen.",
@@ -44,7 +44,7 @@ class ExportRoundTripTest {
                 id = "id-2",
                 designation = "ELD-002",
                 name = "Pale Cartographer",
-                classification = "stirring",
+                classification = "rekna",
                 threat = 2,
                 summary = "Edits geography.",
                 description = "A quiet presence.",
@@ -137,7 +137,7 @@ class ExportRoundTripTest {
         val one = archive.entities.first()
         val md = MarkdownExporter.renderOne(one, archive.classes)
         assertTrue(md.contains("The Hollow Chorister"))
-        assertTrue(md.contains("Unbound"))
+        assertTrue(md.contains("Rinner"))
         // The other entry must not leak into a single share.
         assertTrue(!md.contains("Pale Cartographer"))
     }

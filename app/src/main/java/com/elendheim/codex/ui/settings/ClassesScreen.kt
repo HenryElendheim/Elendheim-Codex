@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,7 +70,18 @@ fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
     val list = working ?: stored
     fun update(newList: List<EntityClass>) { working = newList }
 
+    // A snackbar so the Save button clearly confirms the change went through.
+    val message by vm.message.collectAsState()
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    LaunchedEffect(message) {
+        message?.let {
+            snackbar.showSnackbar(it)
+            vm.clearMessage()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text("Classification") },
@@ -79,6 +91,11 @@ fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
                     }
                 },
                 actions = {
+                    // Explicit save with a confirmation. Edits also save on the way out,
+                    // this button just makes it obvious the change was kept.
+                    IconButton(onClick = { vm.saveClasses(list, confirm = true) }) {
+                        Icon(Icons.Filled.Check, contentDescription = "Save")
+                    }
                     IconButton(onClick = {
                         // A new tier gets a unique key so entities can reference it safely.
                         val fresh = EntityClass(
