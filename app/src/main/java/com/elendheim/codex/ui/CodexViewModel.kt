@@ -82,6 +82,24 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
 
     fun setClearance(level: Int) { viewModelScope.launch { repo.setClearance(level) } }
 
+    // When the backup reminder was last dismissed, used for the quiet period after.
+    val nudgeDismissedAt: StateFlow<Long> =
+        repo.nudgeDismissedAt.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
+
+    fun dismissNudge() { viewModelScope.launch { repo.recordNudgeDismissed() } }
+
+    // How long the randomize spin runs.
+    val spinSeconds: StateFlow<Float> =
+        repo.spinSeconds.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3f)
+
+    fun setSpinSeconds(seconds: Float) { viewModelScope.launch { repo.setSpinSeconds(seconds) } }
+
+    // The remembered overview chart style.
+    val overviewMode: StateFlow<String> =
+        repo.overviewMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "row")
+
+    fun setOverviewMode(mode: String) { viewModelScope.launch { repo.setOverviewMode(mode) } }
+
     // The current filter and sort choices, changed by the index controls.
     val filters = MutableStateFlow(IndexFilters())
 

@@ -25,6 +25,9 @@ class CodexRepository(private val dao: CodexDao) {
         private const val KEY_HIGH_CONTRAST = "high_contrast"
         private const val KEY_REDUCE_MOTION = "reduce_motion"
         private const val KEY_CLEARANCE = "clearance"
+        private const val KEY_NUDGE_DISMISSED = "nudge_dismissed_at"
+        private const val KEY_SPIN_SECONDS = "spin_seconds"
+        private const val KEY_OVERVIEW_MODE = "overview_mode"
     }
 
     // Live streams the screens observe. Room pushes a new list whenever data changes.
@@ -116,6 +119,37 @@ class CodexRepository(private val dao: CodexDao) {
 
     suspend fun setClearance(level: Int) {
         dao.putSetting(SettingRecord(KEY_CLEARANCE, level.coerceIn(1, 5).toString()))
+    }
+
+    // When the backup reminder was last dismissed with the x. It stays away for a
+    // while after that, so it never nags right after you wave it off.
+    val nudgeDismissedAt: Flow<Long> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_NUDGE_DISMISSED }?.value?.toLongOrNull() ?: 0L
+        }
+
+    suspend fun recordNudgeDismissed() {
+        dao.putSetting(SettingRecord(KEY_NUDGE_DISMISSED, now().toString()))
+    }
+
+    // How long the randomize spin runs, in seconds. Default 3, capped at 10.
+    val spinSeconds: Flow<Float> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_SPIN_SECONDS }?.value?.toFloatOrNull()?.coerceIn(1f, 10f) ?: 3f
+        }
+
+    suspend fun setSpinSeconds(seconds: Float) {
+        dao.putSetting(SettingRecord(KEY_SPIN_SECONDS, seconds.coerceIn(1f, 10f).toString()))
+    }
+
+    // Which chart style the overview shows. Remembered so it opens how you left it.
+    val overviewMode: Flow<String> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_OVERVIEW_MODE }?.value ?: "row"
+        }
+
+    suspend fun setOverviewMode(mode: String) {
+        dao.putSetting(SettingRecord(KEY_OVERVIEW_MODE, mode))
     }
 
     suspend fun getEntity(id: String): Entity? = dao.getEntity(id)?.toDomain()

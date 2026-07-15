@@ -1,5 +1,24 @@
 # Releases
 
+## Elendheim Codex v1.8
+
+Nicer randomize, a calmer backup reminder, and a richer overview.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: the randomize spin now glows on every flick and lands with a
+firm pop, and you can set how long it runs, up to ten seconds, in accessibility
+settings. The backup reminder stays away for twenty minutes once you dismiss it. The
+overview now draws the same numbers as row bars, column bars, a stacked bar or blocks,
+and it remembers which one you picked.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.7
 
 Sharper filtering, a bit of theatre, and a security clearance system.

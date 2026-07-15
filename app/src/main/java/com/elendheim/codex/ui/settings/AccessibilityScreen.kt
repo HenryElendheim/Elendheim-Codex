@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,6 +45,7 @@ fun AccessibilityScreen(vm: CodexViewModel, onBack: () -> Unit) {
     val textScale by vm.textScale.collectAsState()
     val highContrast by vm.highContrast.collectAsState()
     val reduceMotion by vm.reduceMotion.collectAsState()
+    val spinSeconds by vm.spinSeconds.collectAsState()
 
     // The text size choices, each a friendly label and its multiplier.
     val sizes = listOf(
@@ -101,10 +103,33 @@ fun AccessibilityScreen(vm: CodexViewModel, onBack: () -> Unit) {
             SectionLabel(text = "Motion", modifier = Modifier.padding(top = 28.dp))
             ToggleRow(
                 title = "Reduce motion",
-                subtitle = "Skips the fade on the opening screen and shortens it.",
+                subtitle = "Skips the fade on the opening screen and the randomize spin.",
                 checked = reduceMotion,
                 onCheckedChange = { vm.setReduceMotion(it) }
             )
+
+            // How long the randomize spin runs, one to ten seconds.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(16.dp)
+            ) {
+                Text("Randomize spin length", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = "About ${"%.1f".format(spinSeconds)} seconds before it lands.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Slider(
+                    value = spinSeconds,
+                    onValueChange = { vm.setSpinSeconds(it) },
+                    valueRange = 1f..10f,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
 
             Text(
                 text = "The quick brown fox jumps over the lazy dog.",

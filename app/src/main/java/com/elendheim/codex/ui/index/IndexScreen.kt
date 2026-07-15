@@ -79,13 +79,15 @@ fun IndexScreen(
     val lastExport by vm.lastExportAt.collectAsState()
     val archiveName by vm.archiveName.collectAsState()
     val reduceMotion by vm.reduceMotion.collectAsState()
+    val spinSeconds by vm.spinSeconds.collectAsState()
+    val nudgeDismissedAt by vm.nudgeDismissedAt.collectAsState()
 
     // Drives the randomize spin overlay. When set, the dialog animates then opens.
     var spinning by remember { mutableStateOf(false) }
     val activeEntities = byId.values.filter { it.status == "active" }
 
-    // The backup reminder can be waved away for the current session.
-    var nudgeDismissed by remember { mutableStateOf(false) }
+    // Hide the reminder at once when dismissed, before the stored time comes back.
+    var nudgeHidden by remember { mutableStateOf(false) }
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -176,19 +178,23 @@ fun IndexScreen(
             )
 
             // A gentle backup reminder. Shows when there is data and it has either
-            // never been exported or not been exported in a month.
+            // never been exported or not been exported in a month. Once you wave it off
+            // with the x, it stays away for twenty minutes so it never nags right back.
             val thirtyDays = 30L * 24 * 60 * 60 * 1000
+            val twentyMinutes = 20L * 60 * 1000
             val stale = lastExport == 0L || (System.currentTimeMillis() - lastExport) > thirtyDays
-            if (!nudgeDismissed && byId.isNotEmpty() && stale) {
+            val recentlyDismissed = (System.currentTimeMillis() - nudgeDismissedAt) < twentyMinutes
+            if (!nudgeHidden && !recentlyDismissed && byId.isNotEmpty() && stale) {
                 ExportNudge(
                     onExport = {
                         val today = LocalDate.now()
                         exportLauncher.launch(
                             "elendheim-codex-%04d-%02d-%02d.json".format(today.year, today.monthValue, today.dayOfMonth)
                         )
-                        nudgeDismissed = true
+                        nudgeHidden = true
+                        vm.dismissNudge()
                     },
-                    onDismiss = { nudgeDismissed = true }
+                    onDismiss = { nudgeHidden = true; vm.dismissNudge() }
                 )
             }
 
@@ -216,6 +222,7 @@ fun IndexScreen(
         RandomizerDialog(
             active = activeEntities,
             reduceMotion = reduceMotion,
+            spinSeconds = spinSeconds,
             onLand = { id -> spinning = false; onOpen(id) },
             onDismiss = { spinning = false }
         )
