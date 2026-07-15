@@ -5,11 +5,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,6 +64,7 @@ fun SettingsScreen(
     val archivedCount by vm.archivedCount.collectAsState()
     val redaction by vm.redactionMode.collectAsState()
     val archiveName by vm.archiveName.collectAsState()
+    val clearance by vm.clearance.collectAsState()
 
     var prefixInput by remember(prefix) { mutableStateOf(prefix) }
     var nameInput by remember(archiveName) { mutableStateOf(archiveName) }
@@ -164,7 +167,7 @@ fun SettingsScreen(
             // so anyone can turn this into their own sorting system.
             SectionLabel(text = "Archive name", modifier = Modifier.padding(top = 28.dp))
             Text(
-                text = "Shown at the top of the app. Rename it to make this your own.",
+                text = "Shown at the top of the app. Rename it to make this your own. Up to 16 characters.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -175,10 +178,12 @@ fun SettingsScreen(
             ) {
                 OutlinedTextField(
                     value = nameInput,
-                    onValueChange = { nameInput = it },
+                    // Keep it short so it always fits the header. Extra typing is ignored.
+                    onValueChange = { if (it.length <= 16) nameInput = it },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
-                    label = { Text("Name") }
+                    label = { Text("Name") },
+                    supportingText = { Text("${nameInput.length} / 16") }
                 )
                 OutlinedButton(onClick = { vm.setArchiveName(nameInput) }) { Text("Save") }
             }
@@ -203,6 +208,40 @@ fun SettingsScreen(
                     label = { Text("Prefix") }
                 )
                 OutlinedButton(onClick = { vm.setPrefix(prefixInput) }) { Text("Save") }
+            }
+
+            // Security clearance. A flavor gate: a file can only be revealed when your
+            // clearance is at least what it needs, and files hide more the more they
+            // redact. At level 1 you read only the open parts and cannot unredact.
+            SectionLabel(text = "Security clearance", modifier = Modifier.padding(top = 28.dp))
+            Text(
+                text = "Your clearance is level $clearance. A file can be revealed only when your " +
+                    "clearance meets what it needs. Heavily redacted files need level 5.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                (1..5).forEach { level ->
+                    val selected = level == clearance
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                            .clickable { vm.setClearance(level) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$level",
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
             }
 
             // Reading and writing helpers.

@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.elendheim.codex.codex.model.requiredClearance
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.RichCodexText
 
@@ -39,10 +40,15 @@ fun StoryDetailScreen(
 ) {
     val byId by vm.entitiesById.collectAsState()
     val redact by vm.redactionMode.collectAsState()
+    val clearance by vm.clearance.collectAsState()
 
     val entity = byId[entityId]
     val story = entity?.story?.getOrNull(index)
     val byDesignation = byId.values.associateBy { it.designation }
+
+    // Same clearance gate as the dossier: a locked file keeps its redactions sealed.
+    val required = entity?.requiredClearance() ?: 1
+    val showRedacted = redact || clearance < required
 
     Scaffold(
         topBar = {
@@ -96,7 +102,7 @@ fun StoryDetailScreen(
                 RichCodexText(
                     text = story.body,
                     byDesignation = byDesignation,
-                    redact = redact,
+                    redact = showRedacted,
                     onOpen = onOpenRelated,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 16.dp)

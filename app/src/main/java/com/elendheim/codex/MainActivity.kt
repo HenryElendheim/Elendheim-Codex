@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,9 +52,10 @@ class MainActivity : ComponentActivity() {
 private fun Root(vm: CodexViewModel) {
     val reduceMotion by vm.reduceMotion.collectAsState()
 
-    // Show the splash first, then the app. The flag lives here so a config change
-    // does not replay the splash unless the whole process restarts.
-    var showSplash by remember { mutableStateOf(true) }
+    // Show the splash first, then the app. rememberSaveable keeps this decision across
+    // configuration changes like rotation or entering split screen, so the splash plays
+    // once per process and can never reappear as a blank screen after a stray recreate.
+    var showSplash by rememberSaveable { mutableStateOf(true) }
     if (showSplash) {
         ElendheimSplash(reduceMotion = reduceMotion, onFinished = { showSplash = false })
     } else {

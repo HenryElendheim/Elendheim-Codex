@@ -25,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -41,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +67,7 @@ import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveGallery
+import com.elendheim.codex.codex.model.requiredClearance
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.ClassChip
 import com.elendheim.codex.ui.components.RichCodexText
@@ -87,7 +91,16 @@ fun DossierScreen(
     val byId by vm.entitiesById.collectAsState()
     val classes by vm.classes.collectAsState()
     val redact by vm.redactionMode.collectAsState()
+    val clearance by vm.clearance.collectAsState()
     val entity = byId[entityId]
+
+    // Clearance gate. A file needs a clearance to be revealed, and the more it hides the
+    // higher that is. When your clearance is short, the redactions stay sealed and the
+    // reveal toggle is locked.
+    val required = entity?.requiredClearance() ?: 1
+    val locked = clearance < required
+    // What the body actually shows: redacted if redaction mode is on, or if locked.
+    val showRedacted = redact || locked
 
     // Lookup from designation to entity so [ELD-007] style links can resolve.
     val byDesignation = byId.values.associateBy { it.designation }
@@ -96,10 +109,21 @@ fun DossierScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // A snackbar for the clearance note and other short messages.
+    val message by vm.message.collectAsState()
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    LaunchedEffect(message) {
+        message?.let {
+            snackbar.showSnackbar(it)
+            vm.clearMessage()
+        }
+    }
+
     var menuOpen by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = {
@@ -115,11 +139,26 @@ fun DossierScreen(
                 },
                 actions = {
                     if (entity != null) {
-                        // Quick redaction toggle. Hides marked phrases across the app.
-                        IconButton(onClick = { vm.setRedactionMode(!redact) }) {
+                        // Redaction toggle. When the file is locked by clearance, this
+                        // shows a lock and cannot reveal, only explains what is needed.
+                        IconButton(onClick = {
+                            if (locked) {
+                                vm.message.value = "Clearance $required needed to reveal this file"
+                            } else {
+                                vm.setRedactionMode(!redact)
+                            }
+                        }) {
                             Icon(
-                                imageVector = if (redact) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (redact) "Show redacted text" else "Redact marked text"
+                                imageVector = when {
+                                    locked -> Icons.Filled.Lock
+                                    redact -> Icons.Filled.VisibilityOff
+                                    else -> Icons.Filled.Visibility
+                                },
+                                contentDescription = when {
+                                    locked -> "Locked, clearance $required needed"
+                                    redact -> "Show redacted text"
+                                    else -> "Redact marked text"
+                                }
                             )
                         }
                         IconButton(onClick = onEdit) {
@@ -213,11 +252,32 @@ fun DossierScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            // A clearance line, shown only when the file actually hides something.
+            if (required > 1) {
+                Row(
+                    modifier = Modifier.padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (locked) Icons.Filled.Lock else Icons.Filled.LockOpen,
+                        contentDescription = null,
+                        tint = if (locked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (locked) "Clearance $required needed" else "Clearance $required",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (locked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+            }
+
             if (entity.summary.isNotBlank()) {
                 RichCodexText(
                     text = entity.summary,
                     byDesignation = byDesignation,
-                    redact = redact,
+                    redact = showRedacted,
                     onOpen = onOpenRelated,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 12.dp)
@@ -226,23 +286,23 @@ fun DossierScreen(
 
             // The images: the cover shows first, then swipe sideways through the rest.
             // A small counter shows which image you are on. Redacted images stay hidden
-            // while redaction mode is on.
-            GalleryPager(gallery = entity.effectiveGallery(), redact = redact, entityName = entity.name)
+            // while redaction mode is on or the file is locked by clearance.
+            GalleryPager(gallery = entity.effectiveGallery(), redact = showRedacted, entityName = entity.name)
 
-            TextSection("Description", entity.description, byDesignation, redact, onOpenRelated)
+            TextSection("Description", entity.description, byDesignation, showRedacted, onOpenRelated)
 
             if (entity.abilities.isNotEmpty()) {
                 SectionLabel(text = "Abilities", modifier = Modifier.padding(top = 20.dp))
-                entity.abilities.forEach { AbilityBlock(it, byDesignation, redact, onOpenRelated) }
+                entity.abilities.forEach { AbilityBlock(it, byDesignation, showRedacted, onOpenRelated) }
             }
 
             if (entity.weaknesses.isNotEmpty()) {
                 SectionLabel(text = "How to beat it", modifier = Modifier.padding(top = 20.dp))
-                entity.weaknesses.forEach { WeaknessBlock(it, byDesignation, redact, onOpenRelated) }
+                entity.weaknesses.forEach { WeaknessBlock(it, byDesignation, showRedacted, onOpenRelated) }
             }
 
-            TextSection("Containment", entity.containment, byDesignation, redact, onOpenRelated)
-            TextSection("Notes", entity.notes, byDesignation, redact, onOpenRelated)
+            TextSection("Containment", entity.containment, byDesignation, showRedacted, onOpenRelated)
+            TextSection("Notes", entity.notes, byDesignation, showRedacted, onOpenRelated)
 
             if (entity.tags.isNotEmpty()) {
                 SectionLabel(text = "Tags", modifier = Modifier.padding(top = 20.dp))

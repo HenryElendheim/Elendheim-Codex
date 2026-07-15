@@ -5,17 +5,21 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,15 +34,18 @@ import com.elendheim.codex.codex.model.EntityClass
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.IndexFilters
 import com.elendheim.codex.ui.SortOrder
+import kotlin.math.roundToInt
 
-// The row of filter and sort controls under the search box. Each control is a small
-// pill that opens a menu. A clear pill appears when any filter is active.
+// The row of filter and sort controls under the search box. Sort and class still use a
+// small dropdown. Threat uses a slider in a little dialog. Tags open their own page,
+// which matters once the archive has hundreds of them.
 @Composable
 fun IndexControls(
     vm: CodexViewModel,
     classes: List<EntityClass>,
     tags: List<String>,
-    filters: IndexFilters
+    filters: IndexFilters,
+    onOpenTagFilter: () -> Unit
 ) {
     val anyActive = filters.classFilter != null || filters.threatFilter != null ||
         filters.tagFilter != null || filters.query.isNotBlank()
@@ -70,22 +77,20 @@ fun IndexControls(
             }
         }
 
-        // Threat filter.
-        FilterPill(label = filters.threatFilter?.let { "Threat $it" } ?: "Threat", active = filters.threatFilter != null) { dismiss ->
-            DropdownMenuItem(text = { Text("Any threat") }, onClick = { vm.setThreatFilter(null); dismiss() })
-            (1..5).forEach { level ->
-                DropdownMenuItem(text = { Text("Threat $level") }, onClick = { vm.setThreatFilter(level); dismiss() })
-            }
-        }
+        // Threat filter, chosen with a slider from 1 to 5. Any clears it.
+        ThreatPill(
+            current = filters.threatFilter,
+            onAny = { vm.setThreatFilter(null) },
+            onPick = { vm.setThreatFilter(it) }
+        )
 
-        // Tag filter, only useful once tags exist.
+        // Tag filter opens its own searchable page, only worth offering once tags exist.
         if (tags.isNotEmpty()) {
-            FilterPill(label = filters.tagFilter ?: "Tag", active = filters.tagFilter != null) { dismiss ->
-                DropdownMenuItem(text = { Text("Any tag") }, onClick = { vm.setTagFilter(null); dismiss() })
-                tags.forEach { tag ->
-                    DropdownMenuItem(text = { Text(tag) }, onClick = { vm.setTagFilter(tag); dismiss() })
-                }
-            }
+            ActionPill(
+                label = filters.tagFilter ?: "Tag",
+                active = filters.tagFilter != null,
+                onClick = onOpenTagFilter
+            )
         }
 
         // Clear everything.
@@ -123,7 +128,64 @@ private fun FilterPill(
     }
 }
 
-// A pill with no menu, used for the clear action.
+// A pill that just runs an action on tap, used for the tag page and, with a dialog, the
+// threat slider.
+@Composable
+private fun ActionPill(label: String, active: Boolean, onClick: () -> Unit) {
+    val border = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+    val textColor = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .border(1.dp, border, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = textColor, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+// The threat pill opens a small dialog with a slider from 1 to 5, plus an Any button to
+// clear it. A dialog keeps the slider out of the horizontally scrolling row, so
+// sliding never fights the scroll.
+@Composable
+private fun ThreatPill(current: Int?, onAny: () -> Unit, onPick: (Int) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    ActionPill(label = current?.let { "Threat $it" } ?: "Threat", active = current != null) { open = true }
+
+    if (open) {
+        var value by remember { mutableStateOf((current ?: 3).toFloat()) }
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text("Filter by threat") },
+            text = {
+                Column {
+                    Text(
+                        text = "Threat ${value.roundToInt()} of 5",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Slider(
+                        value = value,
+                        onValueChange = { value = it },
+                        valueRange = 1f..5f,
+                        steps = 3,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { onPick(value.roundToInt()); open = false }) { Text("Apply") }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAny(); open = false }) { Text("Any") }
+            }
+        )
+    }
+}
+
+// A pill with no border or menu, used for the clear action.
 @Composable
 private fun PlainPill(label: String, onClick: () -> Unit) {
     Row(

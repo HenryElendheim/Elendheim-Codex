@@ -1,5 +1,26 @@
 # Releases
 
+## Elendheim Codex v1.7
+
+Sharper filtering, a bit of theatre, and a security clearance system.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: tags now have their own searchable page so they stay manageable
+in a big archive, threat is chosen with a slider, and the randomize button spins
+through designations before it lands. The overview can be read as bars or blocks. A
+security clearance sets the mood: the more a file redacts, the higher the clearance it
+needs, and at low clearance sealed files stay sealed. You set your clearance in
+settings. The archive name is capped at 16 characters, and a splash screen bug that
+left a blank gray screen is fixed.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.6
 
 More room for pictures and stories.

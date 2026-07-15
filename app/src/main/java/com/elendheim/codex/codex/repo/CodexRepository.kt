@@ -24,6 +24,7 @@ class CodexRepository(private val dao: CodexDao) {
         private const val KEY_TEXT_SCALE = "text_scale"
         private const val KEY_HIGH_CONTRAST = "high_contrast"
         private const val KEY_REDUCE_MOTION = "reduce_motion"
+        private const val KEY_CLEARANCE = "clearance"
     }
 
     // Live streams the screens observe. Room pushes a new list whenever data changes.
@@ -102,6 +103,19 @@ class CodexRepository(private val dao: CodexDao) {
 
     suspend fun setReduceMotion(on: Boolean) {
         dao.putSetting(SettingRecord(KEY_REDUCE_MOTION, if (on) "true" else "false"))
+    }
+
+    // The reader's own security clearance, 1 to 5. A file can only be revealed when
+    // this is at least the clearance the file requires. Starts at the lowest level, so
+    // more redacted files stay sealed until the reader raises it. Flavor, but it sets
+    // the mood.
+    val clearance: Flow<Int> =
+        dao.observeSettings().map { rows ->
+            rows.firstOrNull { it.key == KEY_CLEARANCE }?.value?.toIntOrNull()?.coerceIn(1, 5) ?: 1
+        }
+
+    suspend fun setClearance(level: Int) {
+        dao.putSetting(SettingRecord(KEY_CLEARANCE, level.coerceIn(1, 5).toString()))
     }
 
     suspend fun getEntity(id: String): Entity? = dao.getEntity(id)?.toDomain()

@@ -76,6 +76,12 @@ class CodexViewModel(private val repo: CodexRepository) : ViewModel() {
 
     fun setReduceMotion(on: Boolean) { viewModelScope.launch { repo.setReduceMotion(on) } }
 
+    // The reader's security clearance, 1 to 5. Gates whether redactions can be revealed.
+    val clearance: StateFlow<Int> =
+        repo.clearance.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+
+    fun setClearance(level: Int) { viewModelScope.launch { repo.setClearance(level) } }
+
     // The current filter and sort choices, changed by the index controls.
     val filters = MutableStateFlow(IndexFilters())
 

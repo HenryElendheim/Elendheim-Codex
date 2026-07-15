@@ -67,7 +67,8 @@ fun IndexScreen(
     onOpen: (String) -> Unit,
     onCreate: () -> Unit,
     onSettings: () -> Unit,
-    onOverview: () -> Unit
+    onOverview: () -> Unit,
+    onOpenTagFilter: () -> Unit
 ) {
     val entities by vm.visibleEntities.collectAsState()
     val classes by vm.classes.collectAsState()
@@ -77,6 +78,11 @@ fun IndexScreen(
     val byId by vm.entitiesById.collectAsState()
     val lastExport by vm.lastExportAt.collectAsState()
     val archiveName by vm.archiveName.collectAsState()
+    val reduceMotion by vm.reduceMotion.collectAsState()
+
+    // Drives the randomize spin overlay. When set, the dialog animates then opens.
+    var spinning by remember { mutableStateOf(false) }
+    val activeEntities = byId.values.filter { it.status == "active" }
 
     // The backup reminder can be waved away for the current session.
     var nudgeDismissed by remember { mutableStateOf(false) }
@@ -103,8 +109,8 @@ fun IndexScreen(
             TopAppBar(
                 title = { Text(archiveName) },
                 actions = {
-                    // Open a random entry, handy for rediscovering old ideas.
-                    IconButton(onClick = { vm.randomEntityId()?.let(onOpen) }) {
+                    // Open a random entry with a little spin. Only if there is one to land on.
+                    IconButton(onClick = { if (activeEntities.isNotEmpty()) spinning = true }) {
                         Icon(Icons.Filled.Shuffle, contentDescription = "Open a random entry")
                     }
                     IconButton(onClick = {
@@ -165,7 +171,8 @@ fun IndexScreen(
                 vm = vm,
                 classes = classes,
                 tags = tags,
-                filters = filters
+                filters = filters,
+                onOpenTagFilter = onOpenTagFilter
             )
 
             // A gentle backup reminder. Shows when there is data and it has either
@@ -202,6 +209,16 @@ fun IndexScreen(
                 }
             }
         }
+    }
+
+    // The randomize spin overlay. It picks a winner, animates, then opens it.
+    if (spinning) {
+        RandomizerDialog(
+            active = activeEntities,
+            reduceMotion = reduceMotion,
+            onLand = { id -> spinning = false; onOpen(id) },
+            onDismiss = { spinning = false }
+        )
     }
 }
 

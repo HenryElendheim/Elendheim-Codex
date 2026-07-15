@@ -12,6 +12,7 @@ import com.elendheim.codex.ui.dossier.DossierScreen
 import com.elendheim.codex.ui.dossier.StoryDetailScreen
 import com.elendheim.codex.ui.editor.EditorScreen
 import com.elendheim.codex.ui.index.IndexScreen
+import com.elendheim.codex.ui.index.TagFilterScreen
 import com.elendheim.codex.ui.overview.OverviewScreen
 import com.elendheim.codex.ui.settings.AccessibilityScreen
 import com.elendheim.codex.ui.settings.ClassesScreen
@@ -27,6 +28,7 @@ object Routes {
     const val ARCHIVE = "archive"
     const val OVERVIEW = "overview"
     const val ACCESSIBILITY = "accessibility"
+    const val TAG_FILTER = "tagfilter"
     const val STORY = "story/{id}/{index}"
 
     fun dossier(id: String) = "dossier/$id"
@@ -48,7 +50,8 @@ fun CodexNavHost(vm: CodexViewModel) {
                 onOpen = { id -> nav.navigate(Routes.dossier(id)) },
                 onCreate = { nav.navigate(Routes.editor("new")) },
                 onSettings = { nav.navigate(Routes.SETTINGS) },
-                onOverview = { nav.navigate(Routes.OVERVIEW) }
+                onOverview = { nav.navigate(Routes.OVERVIEW) },
+                onOpenTagFilter = { nav.navigate(Routes.TAG_FILTER) }
             )
         }
 
@@ -91,6 +94,10 @@ fun CodexNavHost(vm: CodexViewModel) {
 
         composable(Routes.ACCESSIBILITY) {
             AccessibilityScreen(vm = vm, onBack = { nav.popBackStack() })
+        }
+
+        composable(Routes.TAG_FILTER) {
+            TagFilterScreen(vm = vm, onBack = { nav.popBackStack() })
         }
 
         composable(

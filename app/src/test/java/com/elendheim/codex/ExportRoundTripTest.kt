@@ -9,6 +9,7 @@ import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.codex.model.effectiveImages
+import com.elendheim.codex.codex.model.requiredClearance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -129,6 +130,22 @@ class ExportRoundTripTest {
 
         val none = Entity(id = "c")
         assertTrue(none.effectiveImages().isEmpty())
+    }
+
+    // Clearance rises with the number of redactions, counting text spans and images.
+    @Test
+    fun clearanceRisesWithRedactions() {
+        val plain = Entity(id = "c0", description = "nothing hidden")
+        assertEquals(1, plain.requiredClearance())
+
+        val heavy = Entity(
+            id = "c1",
+            description = "%%a%% %%b%% %%c%% %%d%%",
+            notes = "%%e%% %%f%% %%g%% %%h%%"
+        )
+        // Eight text spans, more than seven, so the top clearance is needed.
+        assertEquals(8, heavy.redactionCount())
+        assertEquals(5, heavy.requiredClearance())
     }
 
     // A gallery with a redacted image survives a full round trip, and the newest
