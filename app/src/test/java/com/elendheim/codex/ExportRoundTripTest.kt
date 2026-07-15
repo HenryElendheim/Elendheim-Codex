@@ -9,6 +9,7 @@ import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.codex.model.effectiveImages
+import com.elendheim.codex.codex.model.redactionCount
 import com.elendheim.codex.codex.model.requiredClearance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
