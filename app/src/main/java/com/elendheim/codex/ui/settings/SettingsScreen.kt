@@ -234,7 +234,7 @@ fun SettingsScreen(
 
             // Navigation rows.
             SectionLabel(text = "Archive setup", modifier = Modifier.padding(top = 28.dp))
-            SettingsRow(title = "Classification scheme", subtitle = "Name, colour and meaning of your tiers", onClick = onManageClasses)
+            SettingsRow(title = "Classification scheme", subtitle = "Name, color and meaning of your tiers", onClick = onManageClasses)
             SettingsRow(title = "Accessibility", subtitle = "Text size, contrast and motion", onClick = onOpenAccessibility)
             SettingsRow(
                 title = "Archive",

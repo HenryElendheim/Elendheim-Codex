@@ -147,7 +147,7 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
     }
 }
 
-// A labelled bar. The track is faint, the fill shows the share for this row.
+// A labeled bar. The track is faint, the fill shows the share for this row.
 @Composable
 private fun BarRow(label: String, count: Int, fraction: Float, color: Color) {
     Column(modifier = Modifier.padding(top = 10.dp)) {

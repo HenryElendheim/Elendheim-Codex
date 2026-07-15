@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity as DomainEntity
+import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 
@@ -28,6 +29,7 @@ data class EntityRecord(
     val related: List<String>,
     val image: String,
     val images: List<String>,
+    val pictures: List<GalleryImage>,
     val createdAt: Long,
     val updatedAt: Long,
     val status: String
@@ -51,6 +53,7 @@ fun EntityRecord.toDomain(): DomainEntity = DomainEntity(
     related = related,
     image = image,
     images = images,
+    pictures = pictures,
     createdAt = createdAt,
     updatedAt = updatedAt,
     status = status
@@ -74,6 +77,7 @@ fun DomainEntity.toRecord(): EntityRecord = EntityRecord(
     related = related,
     image = image,
     images = images,
+    pictures = pictures,
     createdAt = createdAt,
     updatedAt = updatedAt,
     status = status

@@ -8,6 +8,6 @@ import kotlinx.serialization.Serializable
 data class EntityClass(
     val key: String,              // stable id stored on entities, for example "unbound"
     val label: String,            // shown name, for example Unbound
-    val colorHex: String,         // chip colour, for example #C4383A
+    val colorHex: String,         // chip color, for example #C4383A
     val meaning: String = ""      // short description of what the tier means
 )

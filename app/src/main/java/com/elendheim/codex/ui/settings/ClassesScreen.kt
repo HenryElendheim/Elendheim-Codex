@@ -45,8 +45,8 @@ import com.elendheim.codex.ui.components.parseHex
 import java.util.UUID
 
 // Manage the classification scheme. It is entirely user defined, so the tiers, their
-// colours and their meanings are all editable here. Edits are saved when you leave
-// this screen, so typing a label or colour is never interrupted.
+// colors and their meanings are all editable here. Edits are saved when you leave
+// this screen, so typing a label or color is never interrupted.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
@@ -144,7 +144,7 @@ fun ClassesScreen(vm: CodexViewModel, onBack: () -> Unit) {
     }
 }
 
-// One editable tier: colour swatch, label, hex and meaning.
+// One editable tier: color swatch, label, hex and meaning.
 @Composable
 private fun ClassCard(cls: EntityClass, onChange: (EntityClass) -> Unit, onRemove: () -> Unit) {
     Column(
@@ -155,7 +155,7 @@ private fun ClassCard(cls: EntityClass, onChange: (EntityClass) -> Unit, onRemov
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            // A live swatch of the current colour.
+            // A live swatch of the current color.
             Box(
                 modifier = Modifier
                     .size(28.dp)
@@ -176,7 +176,7 @@ private fun ClassCard(cls: EntityClass, onChange: (EntityClass) -> Unit, onRemov
         OutlinedTextField(
             value = cls.colorHex,
             onValueChange = { onChange(cls.copy(colorHex = it)) },
-            label = { Text("Colour, for example #C4383A") },
+            label = { Text("Color, for example #C4383A") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         )

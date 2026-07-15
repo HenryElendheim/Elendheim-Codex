@@ -3,6 +3,7 @@ package com.elendheim.codex.codex.db
 import androidx.room.TypeConverter
 import com.elendheim.codex.codex.io.CodexJson
 import com.elendheim.codex.codex.model.Ability
+import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import kotlinx.serialization.builtins.ListSerializer
@@ -40,6 +41,15 @@ class Converters {
     fun jsonToStory(value: String): List<StoryEntry> =
         if (value.isBlank()) emptyList()
         else CodexJson.format.decodeFromString(ListSerializer(StoryEntry.serializer()), value)
+
+    @TypeConverter
+    fun galleryToJson(value: List<GalleryImage>): String =
+        CodexJson.format.encodeToString(ListSerializer(GalleryImage.serializer()), value)
+
+    @TypeConverter
+    fun jsonToGallery(value: String): List<GalleryImage> =
+        if (value.isBlank()) emptyList()
+        else CodexJson.format.decodeFromString(ListSerializer(GalleryImage.serializer()), value)
 
     @TypeConverter
     fun stringsToJson(value: List<String>): String =

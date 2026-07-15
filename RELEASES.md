@@ -1,5 +1,25 @@
 # Releases
 
+## Elendheim Codex v1.6
+
+More room for pictures and stories.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: images can be marked redacted with a checkbox and hide behind a
+censored panel, and a dossier now shows a cover image you can swipe through the rest
+of, with a counter for which one you are on. Stories moved to their own section at the
+very bottom, where you can tap one open and read it in full. The examples now carry a
+small gallery and a few short stories. Everything reads in American English, and
+measurements show meters and Celsius with feet and Fahrenheit in parentheses.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.5
 
 Small polish to how it looks and feels on first open.

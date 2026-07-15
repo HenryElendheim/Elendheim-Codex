@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,11 +45,12 @@ import androidx.compose.ui.unit.dp
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
+import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.ui.components.ClassChip
 
-// A labelled text field used throughout the editor. Kept in one place so every field
+// A labeled text field used throughout the editor. Kept in one place so every field
 // looks the same.
 @Composable
 fun EditorField(
@@ -435,12 +437,13 @@ fun RelatedEditor(selfId: String, selected: List<String>, all: List<Entity>, onC
     }
 }
 
-// Pick, preview, reorder and remove the images for a dossier. The first image is the
-// cover, the rest sit below as extra visual info. Each picked image is downscaled and
-// stored as base64 on a background thread, so a big photo never blocks the screen and
-// never bloats the file.
+// Pick, preview, reorder, redact and remove the images for a dossier. The first image
+// is the intro or cover, the rest sit below as extra visual info. Each image has a
+// Redacted checkbox that hides it behind a censored panel when redaction mode is on.
+// Picked images are downscaled and stored as base64 on a background thread, so a big
+// photo never blocks the screen and never bloats the file.
 @Composable
-fun GalleryEditor(images: List<String>, onChange: (List<String>) -> Unit) {
+fun GalleryEditor(gallery: List<GalleryImage>, onChange: (List<GalleryImage>) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
@@ -455,16 +458,16 @@ fun GalleryEditor(images: List<String>, onChange: (List<String>) -> Unit) {
                     com.elendheim.codex.codex.io.ImageCodec.fromUri(context.contentResolver, uri)
                 }
                 // A newly added image goes to the end. The first image stays the cover.
-                if (encoded != null) onChange(images + encoded)
+                if (encoded != null) onChange(gallery + GalleryImage(data = encoded))
                 busy = false
             }
         }
     }
 
     Column(modifier = Modifier.padding(top = 8.dp)) {
-        images.forEachIndexed { index, img ->
+        gallery.forEachIndexed { index, pic ->
             // Decode each stored image once per value for its preview.
-            val bitmap = remember(img) { com.elendheim.codex.codex.io.ImageCodec.toBitmap(img) }
+            val bitmap = remember(pic.data) { com.elendheim.codex.codex.io.ImageCodec.toBitmap(pic.data) }
             Column(modifier = Modifier.padding(bottom = 12.dp)) {
                 Text(
                     text = if (index == 0) "First image (cover)" else "Image ${index + 1}",
@@ -484,15 +487,32 @@ fun GalleryEditor(images: List<String>, onChange: (List<String>) -> Unit) {
                             .clip(RoundedCornerShape(8.dp))
                     )
                 }
-                Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Redacted checkbox for this one image.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 6.dp).clickable {
+                        onChange(gallery.replaceAt(index, pic.copy(redacted = !pic.redacted)))
+                    }
+                ) {
+                    Checkbox(
+                        checked = pic.redacted,
+                        onCheckedChange = { onChange(gallery.replaceAt(index, pic.copy(redacted = it))) }
+                    )
+                    Text(
+                        text = "Redacted",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // Promote any later image to be the cover.
                     if (index > 0) {
-                        OutlinedButton(onClick = { onChange(images.moveToFront(index)) }, enabled = !busy) {
+                        OutlinedButton(onClick = { onChange(gallery.moveToFront(index)) }, enabled = !busy) {
                             Text("Set as first")
                         }
                     }
                     OutlinedButton(
-                        onClick = { onChange(images.toMutableList().apply { removeAt(index) }) },
+                        onClick = { onChange(gallery.toMutableList().apply { removeAt(index) }) },
                         enabled = !busy
                     ) { Text("Remove") }
                 }
@@ -500,7 +520,7 @@ fun GalleryEditor(images: List<String>, onChange: (List<String>) -> Unit) {
         }
 
         OutlinedButton(onClick = { picker.launch(arrayOf("image/*")) }, enabled = !busy) {
-            Text(if (busy) "Adding..." else if (images.isEmpty()) "Add an image" else "Add another image")
+            Text(if (busy) "Adding..." else if (gallery.isEmpty()) "Add an image" else "Add another image")
         }
     }
 }

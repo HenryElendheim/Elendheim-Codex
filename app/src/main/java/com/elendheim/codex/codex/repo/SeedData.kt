@@ -2,22 +2,30 @@ package com.elendheim.codex.codex.repo
 
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
+import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import java.util.UUID
 
 // Three plain example entries written on first run. They are deliberately simple and
-// obvious, each one showing the format with a single ability, a single weakness, a
-// short history note and a placeholder image. A few phrases are wrapped in %% so the
-// redaction feature is visible right away. Every one says clearly that it is an
-// example, so it is easy to rename, edit or delete and start your own archive.
+// obvious, each showing the format with a single ability, a single weakness, a few
+// short stories and a small gallery. One image is marked redacted so that feature is
+// visible, and a few phrases use %% so text redaction shows too. Measurements are in
+// meters and Celsius with feet and Fahrenheit in parentheses. Every entry says clearly
+// that it is an example, so it is easy to rename, edit or delete and start your own.
 object SeedData {
+
+    // The four placeholder images. redactLast marks the last one redacted to show how a
+    // hidden image looks while redaction mode is on.
+    private fun gallery(redactLast: Boolean): List<GalleryImage> =
+        SeedImages.defaultGallery.mapIndexed { i, data ->
+            GalleryImage(data = data, redacted = redactLast && i == SeedImages.defaultGallery.lastIndex)
+        }
 
     fun entities(): List<Entity> {
         // Fixed base time so the seeds have a sensible order without needing a clock.
         val base = 1_700_000_000_000L
         val note = "This is an example entry to show the format. Rename it, edit it, or delete it whenever you like."
-        val pic = listOf(SeedImages.placeholder)
 
         return listOf(
             Entity(
@@ -34,7 +42,7 @@ object SeedData {
                     Ability(
                         name = "Dim the lights",
                         mechanism = "Weakens nearby electric light while it is within a room.",
-                        limits = "Only affects lights in the same room. Range is about %%four metres%%."
+                        limits = "Only affects lights in the same room. Range is about %%4 meters (13 feet)%%."
                     )
                 ),
                 weaknesses = listOf(
@@ -50,14 +58,20 @@ object SeedData {
                     StoryEntry(
                         title = "First noticed",
                         period = "Day one",
-                        body = "Found because the hallway lights kept flickering near the %%old archive room%%. " +
-                            "Nothing else seemed out of place. See [ELND-002]."
+                        body = "The hallway lights kept flickering near the %%old archive room%%. Nothing " +
+                            "else seemed out of place. See [ELND-002]."
+                    ),
+                    StoryEntry(
+                        title = "A quiet week",
+                        period = "Day eight",
+                        body = "Seven days with no change. It sat in its room and dimmed the lamp now and then."
                     )
                 ),
                 tags = listOf("example", "lights"),
                 related = emptyList(),
-                image = SeedImages.placeholder,
-                images = pic,
+                image = SeedImages.image1,
+                images = SeedImages.defaultGallery,
+                pictures = gallery(redactLast = true),
                 createdAt = base,
                 updatedAt = base,
                 status = "active"
@@ -70,7 +84,7 @@ object SeedData {
                 threat = 2,
                 summary = "A door that appears on a wall where there was none.",
                 description = "Another simple example. A plain door shows up on a blank wall. It opens, " +
-                    "but there is only a shallow empty space behind it, about %%half a metre deep%%.",
+                    "but there is only a shallow empty space behind it, about %%0.5 meters (20 inches)%% deep.",
                 abilities = listOf(
                     Ability(
                         name = "Appear",
@@ -93,12 +107,18 @@ object SeedData {
                         period = "Week two",
                         body = "A staff member opened it and found only %%bare concrete%% behind. It was gone " +
                             "an hour later."
+                    ),
+                    StoryEntry(
+                        title = "Moved rooms",
+                        period = "Week four",
+                        body = "It stopped appearing in the store room and started showing up in the %%stairwell%% instead."
                     )
                 ),
                 tags = listOf("example", "spatial"),
                 related = emptyList(),
-                image = SeedImages.placeholder,
-                images = pic,
+                image = SeedImages.image1,
+                images = SeedImages.defaultGallery,
+                pictures = gallery(redactLast = false),
                 createdAt = base + 1000,
                 updatedAt = base + 1000,
                 status = "active"
@@ -111,7 +131,7 @@ object SeedData {
                 threat = 1,
                 summary = "Repeats the last thing it hears, a few seconds later.",
                 description = "The last simple example. It waits, then repeats the last sentence it heard " +
-                    "in a flat copy of the speaker's voice. The delay is usually %%about six seconds%%.",
+                    "in a flat copy of the speaker's voice. The delay is usually about six seconds.",
                 abilities = listOf(
                     Ability(
                         name = "Repeat",
@@ -126,7 +146,7 @@ object SeedData {
                         severity = "situational"
                     )
                 ),
-                containment = "A quiet room is enough. No special measures needed.",
+                containment = "A quiet room kept cool, below about 20 C (68 F), is enough. No special measures needed.",
                 notes = note,
                 story = listOf(
                     StoryEntry(
@@ -137,8 +157,9 @@ object SeedData {
                 ),
                 tags = listOf("example", "sound"),
                 related = emptyList(),
-                image = SeedImages.placeholder,
-                images = pic,
+                image = SeedImages.image1,
+                images = SeedImages.defaultGallery,
+                pictures = gallery(redactLast = false),
                 createdAt = base + 2000,
                 updatedAt = base + 2000,
                 status = "active"

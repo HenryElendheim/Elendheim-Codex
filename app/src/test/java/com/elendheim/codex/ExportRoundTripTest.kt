@@ -7,6 +7,7 @@ import com.elendheim.codex.codex.model.CodexExport
 import com.elendheim.codex.codex.model.Defaults
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.Weakness
+import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.codex.model.effectiveImages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -128,6 +129,26 @@ class ExportRoundTripTest {
 
         val none = Entity(id = "c")
         assertTrue(none.effectiveImages().isEmpty())
+    }
+
+    // A gallery with a redacted image survives a full round trip, and the newest
+    // pictures field takes priority over the older image fields.
+    @Test
+    fun galleryRedactionRoundTripAndPriority() {
+        val e = Entity(
+            id = "g1",
+            image = "X",
+            images = listOf("X", "Y"),
+            pictures = listOf(
+                com.elendheim.codex.codex.model.GalleryImage("P1"),
+                com.elendheim.codex.codex.model.GalleryImage("P2", redacted = true)
+            )
+        )
+        val back = CodexFiles.decode(CodexFiles.encode(CodexExport(entities = listOf(e))))
+        assertEquals(e, back.entities.first())
+        val gallery = back.entities.first().effectiveGallery()
+        assertEquals(listOf("P1", "P2"), gallery.map { it.data })
+        assertTrue(gallery[1].redacted)
     }
 
     // Sharing a single entry renders just that dossier, with its class label resolved.

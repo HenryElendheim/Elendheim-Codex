@@ -1,7 +1,7 @@
 package com.elendheim.codex.codex.model
 
 // The starting classification scheme. It is only a starting point, the user can
-// rename, recolour, add or remove tiers in settings. Threat 1 to 5 is a separate
+// rename, recolor, add or remove tiers in settings. Threat 1 to 5 is a separate
 // axis from class on purpose: how dangerous is not the same as how hard to contain.
 object Defaults {
     val classes: List<EntityClass> = listOf(

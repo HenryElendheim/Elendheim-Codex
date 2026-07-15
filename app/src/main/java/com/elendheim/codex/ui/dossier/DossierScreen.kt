@@ -13,13 +13,17 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Visibility
@@ -56,9 +60,10 @@ import com.elendheim.codex.codex.io.ImageCodec
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
+import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
-import com.elendheim.codex.codex.model.effectiveImages
+import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.ClassChip
 import com.elendheim.codex.ui.components.RichCodexText
@@ -75,7 +80,8 @@ fun DossierScreen(
     entityId: String,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onOpenRelated: (String) -> Unit
+    onOpenRelated: (String) -> Unit,
+    onOpenStory: (String, Int) -> Unit
 ) {
     // Read the dossier straight from the live map so any edit shows at once.
     val byId by vm.entitiesById.collectAsState()
@@ -218,23 +224,10 @@ fun DossierScreen(
                 )
             }
 
-            // The images, the cover first and any extra ones below it, each full width.
-            val gallery = entity.effectiveImages()
-            gallery.forEachIndexed { index, img ->
-                val bitmap = remember(img) { ImageCodec.toBitmap(img) }
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Image ${index + 1} for ${entity.name}",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 320.dp)
-                            .padding(top = 16.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                }
-            }
+            // The images: the cover shows first, then swipe sideways through the rest.
+            // A small counter shows which image you are on. Redacted images stay hidden
+            // while redaction mode is on.
+            GalleryPager(gallery = entity.effectiveGallery(), redact = redact, entityName = entity.name)
 
             TextSection("Description", entity.description, byDesignation, redact, onOpenRelated)
 
@@ -250,12 +243,6 @@ fun DossierScreen(
 
             TextSection("Containment", entity.containment, byDesignation, redact, onOpenRelated)
             TextSection("Notes", entity.notes, byDesignation, redact, onOpenRelated)
-
-            // The history log: past events, each its own block, redactions and all.
-            if (entity.story.isNotEmpty()) {
-                SectionLabel(text = "History", modifier = Modifier.padding(top = 20.dp))
-                entity.story.forEach { StoryBlock(it, byDesignation, redact, onOpenRelated) }
-            }
 
             if (entity.tags.isNotEmpty()) {
                 SectionLabel(text = "Tags", modifier = Modifier.padding(top = 20.dp))
@@ -273,6 +260,15 @@ fun DossierScreen(
                             RelatedPill(rel) { onOpenRelated(relId) }
                         }
                     }
+                }
+            }
+
+            // Stories sit on their own at the very bottom. Each is a tappable row that
+            // opens a full reading view, so long history reads on a clean screen.
+            if (entity.story.isNotEmpty()) {
+                SectionLabel(text = "Stories", modifier = Modifier.padding(top = 28.dp))
+                entity.story.forEachIndexed { index, s ->
+                    StoryRow(entry = s, onClick = { onOpenStory(entity.id, index) })
                 }
             }
 
@@ -295,7 +291,7 @@ fun DossierScreen(
     }
 }
 
-// A labelled block of freeform text, skipped entirely when the field is empty.
+// A labeled block of freeform text, skipped entirely when the field is empty.
 @Composable
 private fun TextSection(
     label: String,
@@ -343,18 +339,21 @@ private fun AbilityBlock(ability: Ability, byDesignation: Map<String, Entity>, r
     }
 }
 
-// One history event rendered as a titled block: title, optional time label, body.
+// One story shown as a tappable row: title, optional time label, and a chevron. The
+// full text lives on its own reading screen, opened by tapping this.
 @Composable
-private fun StoryBlock(entry: StoryEntry, byDesignation: Map<String, Entity>, redact: Boolean, onOpen: (String) -> Unit) {
-    Column(
+private fun StoryRow(entry: StoryEntry, onClick: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(12.dp)
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = entry.title.ifBlank { "Untitled event" },
                 style = MaterialTheme.typography.titleMedium,
@@ -370,13 +369,101 @@ private fun StoryBlock(entry: StoryEntry, byDesignation: Map<String, Entity>, re
                 )
             }
         }
-        if (entry.body.isNotBlank()) {
-            RichCodexText(
-                text = entry.body,
-                byDesignation = byDesignation,
-                redact = redact,
-                onOpen = onOpen,
-                style = MaterialTheme.typography.bodyLarge,
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// The swipeable image viewer. The first image is the intro, and any others are a
+// swipe away. A small counter shows which one you are on. A redacted image, while
+// redaction mode is on, shows a censored panel instead of the picture.
+@Composable
+private fun GalleryPager(gallery: List<GalleryImage>, redact: Boolean, entityName: String) {
+    if (gallery.isEmpty()) return
+    val pagerState = rememberPagerState(pageCount = { gallery.size })
+
+    Column(modifier = Modifier.padding(top = 16.dp)) {
+        HorizontalPager(
+            state = pagerState,
+            pageSpacing = 8.dp,
+            // A fixed height keeps the frame steady while swiping between images.
+            modifier = Modifier.fillMaxWidth().height(300.dp)
+        ) { page ->
+            val pic = gallery[page]
+            if (redact && pic.redacted) {
+                RedactedImageBox()
+            } else {
+                val bitmap = remember(pic.data) { ImageCodec.toBitmap(pic.data) }
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Image ${page + 1} for $entityName",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                } else {
+                    RedactedImageBox()
+                }
+            }
+        }
+
+        // Counter and dots, only worth showing once there is more than one image.
+        if (gallery.size > 1) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${gallery.size}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace
+                )
+                Row(
+                    modifier = Modifier.padding(start = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    for (i in gallery.indices) {
+                        val on = i == pagerState.currentPage
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (on) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline
+                                )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The censored panel shown in place of a redacted image.
+@Composable
+private fun RedactedImageBox() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Filled.VisibilityOff,
+                contentDescription = "Redacted image",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "REDACTED",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace,
                 modifier = Modifier.padding(top = 6.dp)
             )
         }

@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.sp
 import com.elendheim.codex.codex.model.EntityClass
 import com.elendheim.codex.ui.theme.CodexTextFaint
 
-// Turn a stored colour string like #C4383A into a Compose Color. Falls back to a
-// neutral grey if the text is ever malformed, so a bad value never crashes a screen.
+// Turn a stored color string like #C4383A into a Compose Color. Falls back to a
+// neutral gray if the text is ever malformed, so a bad value never crashes a screen.
 fun parseHex(hex: String): Color = runCatching {
     val clean = hex.removePrefix("#")
     val value = clean.toLong(16)
@@ -35,7 +35,7 @@ fun parseHex(hex: String): Color = runCatching {
     }
 }.getOrDefault(Color(0xFF9A9AA2))
 
-// A small coloured pill showing an entity's class. The colour comes from the class
+// A small colored pill showing an entity's class. The color comes from the class
 // definition, so the user's own scheme drives the look.
 @Composable
 fun ClassChip(classKey: String, classes: List<EntityClass>, modifier: Modifier = Modifier) {

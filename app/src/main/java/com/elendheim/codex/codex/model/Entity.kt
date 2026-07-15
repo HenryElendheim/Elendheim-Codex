@@ -18,23 +18,34 @@ data class Entity(
     val description: String = "",         // what it is, how it looks, how it behaves
     val abilities: List<Ability> = emptyList(),   // structured powers, see below
     val weaknesses: List<Weakness> = emptyList(), // structured counters, see below
-    val containment: String = "",         // how to hold, neutralise or survive it
+    val containment: String = "",         // how to hold, neutralize or survive it
     val notes: String = "",               // lore, incidents, open questions
     val story: List<StoryEntry> = emptyList(), // past events, the history log
 
     val tags: List<String> = emptyList(), // freeform labels, for example sound-based
     val related: List<String> = emptyList(), // ids of linked entities
-    // Legacy single image, kept so files from older versions still load. New entries
-    // use the images list below and mirror its first item here for old readers.
-    val image: String = "",               // JPEG stored as base64
-    val images: List<String> = emptyList(), // the gallery, each a base64 JPEG, first is cover
+    // Image fields, newest last. pictures is the current gallery and each item can be
+    // redacted on its own. The two older fields are kept so files from earlier versions
+    // still load, and new entries mirror their gallery into them for old readers.
+    val image: String = "",               // legacy single image, base64
+    val images: List<String> = emptyList(), // legacy gallery, base64 per item
+    val pictures: List<GalleryImage> = emptyList(), // current gallery, first is cover
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     val status: String = "active"         // active or archived, archived is a soft delete
 )
 
-// The pictures to actually show for an entry. New entries fill images, older ones and
-// files from before the gallery existed only have the single image, so fall back to
-// that. This keeps one source of truth for the UI without touching stored data.
+// The gallery to actually show, resolved across the three image fields. New entries
+// fill pictures, older ones only have images or the single image, so fall back down
+// the chain. One source of truth for the UI without touching stored data.
+fun Entity.effectiveGallery(): List<GalleryImage> = when {
+    pictures.isNotEmpty() -> pictures
+    images.isNotEmpty() -> images.map { GalleryImage(it) }
+    image.isNotBlank() -> listOf(GalleryImage(image))
+    else -> emptyList()
+}
+
+// Just the image data, used where redaction does not matter, for example counting
+// images in the Markdown export.
 fun Entity.effectiveImages(): List<String> =
-    images.ifEmpty { if (image.isNotBlank()) listOf(image) else emptyList() }
+    effectiveGallery().map { it.data }

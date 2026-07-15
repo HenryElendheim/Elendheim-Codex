@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.archive.ArchiveScreen
 import com.elendheim.codex.ui.dossier.DossierScreen
+import com.elendheim.codex.ui.dossier.StoryDetailScreen
 import com.elendheim.codex.ui.editor.EditorScreen
 import com.elendheim.codex.ui.index.IndexScreen
 import com.elendheim.codex.ui.overview.OverviewScreen
@@ -26,9 +27,11 @@ object Routes {
     const val ARCHIVE = "archive"
     const val OVERVIEW = "overview"
     const val ACCESSIBILITY = "accessibility"
+    const val STORY = "story/{id}/{index}"
 
     fun dossier(id: String) = "dossier/$id"
     fun editor(id: String) = "editor/$id"   // pass "new" to create a fresh dossier
+    fun story(id: String, index: Int) = "story/$id/$index"
 }
 
 // Wires every screen together. One shared ViewModel is passed down so all screens
@@ -59,7 +62,8 @@ fun CodexNavHost(vm: CodexViewModel) {
                 entityId = id,
                 onBack = { nav.popBackStack() },
                 onEdit = { nav.navigate(Routes.editor(id)) },
-                onOpenRelated = { relatedId -> nav.navigate(Routes.dossier(relatedId)) }
+                onOpenRelated = { relatedId -> nav.navigate(Routes.dossier(relatedId)) },
+                onOpenStory = { storyEntityId, index -> nav.navigate(Routes.story(storyEntityId, index)) }
             )
         }
 
@@ -87,6 +91,24 @@ fun CodexNavHost(vm: CodexViewModel) {
 
         composable(Routes.ACCESSIBILITY) {
             AccessibilityScreen(vm = vm, onBack = { nav.popBackStack() })
+        }
+
+        composable(
+            route = Routes.STORY,
+            arguments = listOf(
+                navArgument("id") { type = NavType.StringType },
+                navArgument("index") { type = NavType.IntType }
+            )
+        ) { entry ->
+            val id = entry.arguments?.getString("id").orEmpty()
+            val index = entry.arguments?.getInt("index") ?: 0
+            StoryDetailScreen(
+                vm = vm,
+                entityId = id,
+                index = index,
+                onBack = { nav.popBackStack() },
+                onOpenRelated = { relatedId -> nav.navigate(Routes.dossier(relatedId)) }
+            )
         }
 
         composable(Routes.CLASSES) {

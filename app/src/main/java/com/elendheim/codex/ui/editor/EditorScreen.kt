@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elendheim.codex.codex.model.Entity
+import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.codex.model.effectiveImages
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.SectionLabel
@@ -150,10 +151,17 @@ fun EditorScreen(
             // Images: a cover plus any extra visual info added lower down.
             SectionLabel(text = "Images", modifier = Modifier.padding(top = 16.dp))
             GalleryEditor(
-                images = current.effectiveImages(),
-                // Keep the legacy single image in step with the first gallery image so
-                // older app versions and old export readers still see a picture.
-                onChange = { list -> draft = current.copy(images = list, image = list.firstOrNull() ?: "") }
+                gallery = current.effectiveGallery(),
+                // pictures is the current gallery. We mirror its data into the older
+                // images and image fields so older app versions and old export readers
+                // still see the pictures.
+                onChange = { list ->
+                    draft = current.copy(
+                        pictures = list,
+                        images = list.map { it.data },
+                        image = list.firstOrNull()?.data ?: ""
+                    )
+                }
             )
 
             // Structured ability rows.
