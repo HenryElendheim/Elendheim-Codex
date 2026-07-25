@@ -1,5 +1,21 @@
 # Releases
 
+## Elendheim Codex v1.9.1
+
+A small wording change on the about screen.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: the about screen now shows just the version and a short line
+inviting you to write whatever fits your report format and make it your own.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.9
 
 Clearance locks down editing, and stories gain real dates.

@@ -347,22 +347,16 @@ private fun AboutCard(archiveName: String) {
             fontFamily = FontFamily.Monospace
         )
         Text(
-            text = "Elendheim Codex v${BuildConfig.VERSION_NAME}",
+            text = "v${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 2.dp)
         )
         Text(
-            text = "A quiet place for the things you make up. Write down what each one is, what it can do, and how it goes down, then find it again in seconds when you need it.",
+            text = "Write whichever ideas come to your head that would fit the anomaly report format chosen. Customize to your heart's content!",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(top = 12.dp)
-        )
-        Text(
-            text = "It never leaves this phone unless you send it somewhere, and when you do, the whole archive travels as one file that stays yours. Built on the Elendheim suite, open source under the MIT license.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
         )
     }
 }
