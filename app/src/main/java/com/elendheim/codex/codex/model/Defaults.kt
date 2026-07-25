@@ -5,7 +5,7 @@ package com.elendheim.codex.codex.model
 // axis from class on purpose: how dangerous is not the same as how hard to contain.
 object Defaults {
     val classes: List<EntityClass> = listOf(
-        EntityClass("clam", "Clam", "#5B8C7B", "Known and quiet. Contained or inert for now."),
+        EntityClass("clam", "Clam", "#5B8C7B", "Easy to contain. Not always safe, just well understood and reliably held."),
         EntityClass("rekna", "Rekna", "#C9A227", "Showing activity. Watch closely, effects are spreading."),
         EntityClass("rinner", "Rinner", "#C4383A", "Loose and acting on its own. Direct threat."),
         EntityClass("heimer", "Heimer", "#8A2BE2", "Beyond current means to contain. Handle with extreme care."),

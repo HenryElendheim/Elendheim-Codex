@@ -25,9 +25,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EditOff
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -37,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,6 +70,8 @@ import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveGallery
+import com.elendheim.codex.codex.model.matchesQuery
+import com.elendheim.codex.codex.model.orderedByDate
 import com.elendheim.codex.codex.model.requiredClearance
 import com.elendheim.codex.ui.CodexViewModel
 import com.elendheim.codex.ui.components.ClassChip
@@ -161,8 +166,16 @@ fun DossierScreen(
                                 }
                             )
                         }
-                        IconButton(onClick = onEdit) {
-                            Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                        // Editing is blocked while the file is locked, since you cannot
+                        // even see what you would be changing.
+                        IconButton(onClick = {
+                            if (locked) vm.message.value = "Clearance $required needed to edit this file"
+                            else onEdit()
+                        }) {
+                            Icon(
+                                imageVector = if (locked) Icons.Filled.EditOff else Icons.Filled.Edit,
+                                contentDescription = if (locked) "Editing locked" else "Edit"
+                            )
                         }
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "More")
@@ -174,12 +187,18 @@ fun DossierScreen(
                                 text = { Text("Share as text") },
                                 onClick = {
                                     menuOpen = false
-                                    val send = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TITLE, "${entity.designation} ${entity.name}".trim())
-                                        putExtra(Intent.EXTRA_TEXT, vm.shareTextFor(entity))
+                                    if (locked) {
+                                        // Sharing would spell out the hidden text, so it
+                                        // needs the same clearance as reading does.
+                                        vm.message.value = "Clearance $required needed to share this file"
+                                    } else {
+                                        val send = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TITLE, "${entity.designation} ${entity.name}".trim())
+                                            putExtra(Intent.EXTRA_TEXT, vm.shareTextFor(entity))
+                                        }
+                                        context.startActivity(Intent.createChooser(send, "Share entry"))
                                     }
-                                    context.startActivity(Intent.createChooser(send, "Share entry"))
                                 }
                             )
                             // Make a copy as a new entry, then open the copy.
@@ -323,12 +342,34 @@ fun DossierScreen(
                 }
             }
 
-            // Stories sit on their own at the very bottom. Each is a tappable row that
-            // opens a full reading view, so long history reads on a clean screen.
+            // Stories sit on their own at the very bottom, oldest date first. Each is a
+            // tappable row that opens a full reading view. A search box filters them by
+            // date or title once there is more than one.
             if (entity.story.isNotEmpty()) {
                 SectionLabel(text = "Stories", modifier = Modifier.padding(top = 28.dp))
-                entity.story.forEachIndexed { index, s ->
-                    StoryRow(entry = s, onClick = { onOpenStory(entity.id, index) })
+                var storyQuery by remember(entity.id) { mutableStateOf("") }
+                if (entity.story.size > 1) {
+                    OutlinedTextField(
+                        value = storyQuery,
+                        onValueChange = { storyQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search stories by date or title") },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        singleLine = true
+                    )
+                }
+                val orderedStories = entity.story.orderedByDate().filter { (_, s) -> s.matchesQuery(storyQuery) }
+                if (orderedStories.isEmpty()) {
+                    Text(
+                        text = "No stories match.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                } else {
+                    orderedStories.forEach { (originalIndex, s) ->
+                        StoryRow(entry = s, onClick = { onOpenStory(entity.id, originalIndex) })
+                    }
                 }
             }
 

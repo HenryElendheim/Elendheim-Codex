@@ -1,5 +1,24 @@
 # Releases
 
+## Elendheim Codex v1.9
+
+Clearance locks down editing, and stories gain real dates.
+
+This app does three things:
+
+- Keeps a structured archive of entities, each with abilities and weaknesses laid
+  out cleanly.
+- Lets you search, filter and sort the whole archive fast.
+- Exports and imports everything as a single file, so your data is always yours.
+
+New in this version: a file you do not have the clearance to reveal can no longer be
+edited or shared, only read in its sealed form. Story dates are written as dd.mm.yyyy
+and the field will not take anything else. Stories now list oldest first and can be
+searched by date, even just a year, or by title. The Clam tier now reads as easy to
+contain rather than harmless.
+
+Dark first. No accounts, no network permission. Open source under the MIT license.
+
 ## Elendheim Codex v1.8
 
 Nicer randomize, a calmer backup reminder, and a richer overview.

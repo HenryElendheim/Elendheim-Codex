@@ -57,13 +57,13 @@ object SeedData {
                 story = listOf(
                     StoryEntry(
                         title = "First noticed",
-                        period = "Day one",
+                        period = "03.01.2024",
                         body = "The hallway lights kept flickering near the %%old archive room%%. Nothing " +
                             "else seemed out of place. See [ELND-002]."
                     ),
                     StoryEntry(
                         title = "A quiet week",
-                        period = "Day eight",
+                        period = "10.01.2024",
                         body = "Seven days with no change. It sat in its room and dimmed the lamp now and then."
                     )
                 ),
@@ -104,13 +104,13 @@ object SeedData {
                 story = listOf(
                     StoryEntry(
                         title = "Opened once",
-                        period = "Week two",
+                        period = "18.01.2024",
                         body = "A staff member opened it and found only %%bare concrete%% behind. It was gone " +
                             "an hour later."
                     ),
                     StoryEntry(
                         title = "Moved rooms",
-                        period = "Week four",
+                        period = "01.02.2024",
                         body = "It stopped appearing in the store room and started showing up in the %%stairwell%% instead."
                     )
                 ),
@@ -151,7 +151,7 @@ object SeedData {
                 story = listOf(
                     StoryEntry(
                         title = "Logged for the record",
-                        period = "Week three",
+                        period = "25.01.2024",
                         body = "Kept as a calm example next to [ELND-001] and [ELND-002]."
                     )
                 ),

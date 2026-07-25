@@ -9,6 +9,8 @@ import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.Weakness
 import com.elendheim.codex.codex.model.effectiveGallery
 import com.elendheim.codex.codex.model.effectiveImages
+import com.elendheim.codex.codex.model.matchesQuery
+import com.elendheim.codex.codex.model.orderedByDate
 import com.elendheim.codex.codex.model.redactionCount
 import com.elendheim.codex.codex.model.requiredClearance
 import org.junit.Assert.assertEquals
@@ -131,6 +133,20 @@ class ExportRoundTripTest {
 
         val none = Entity(id = "c")
         assertTrue(none.effectiveImages().isEmpty())
+    }
+
+    // Story dates shape to dd.mm.yyyy, order oldest first, and search by year or title.
+    @Test
+    fun storyDatesShapeOrderAndSearch() {
+        assertEquals("25.07.2003", com.elendheim.codex.codex.model.shapeDateInput("25a07b2003"))
+        val stories = listOf(
+            com.elendheim.codex.codex.model.StoryEntry("Later", "10.02.2020", ""),
+            com.elendheim.codex.codex.model.StoryEntry("Earlier", "05.01.2019", "")
+        )
+        val ordered = stories.orderedByDate()
+        assertEquals(listOf("Earlier", "Later"), ordered.map { it.second.title })
+        assertTrue(stories.first().matchesQuery("2020"))
+        assertTrue(!stories.first().matchesQuery("2019"))
     }
 
     // Clearance rises with the number of redactions, counting text spans and images.

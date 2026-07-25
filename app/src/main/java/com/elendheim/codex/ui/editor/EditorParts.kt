@@ -42,13 +42,31 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import com.elendheim.codex.codex.model.Ability
 import com.elendheim.codex.codex.model.Entity
 import com.elendheim.codex.codex.model.EntityClass
 import com.elendheim.codex.codex.model.GalleryImage
 import com.elendheim.codex.codex.model.StoryEntry
 import com.elendheim.codex.codex.model.Weakness
+import com.elendheim.codex.codex.model.shapeDateInput
 import com.elendheim.codex.ui.components.ClassChip
+
+// A date field locked to the dd.mm.yyyy shape. It shows a placeholder in that form and
+// reshapes every keystroke, so a date can never be written any other way.
+@Composable
+fun DateField(value: String, onValue: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { onValue(shapeDateInput(it)) },
+        label = { Text("Date") },
+        placeholder = { Text("dd.mm.yyyy") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier.fillMaxWidth().padding(top = 8.dp)
+    )
+}
 
 // A labeled text field used throughout the editor. Kept in one place so every field
 // looks the same.
@@ -234,7 +252,7 @@ fun StoryEditor(story: List<StoryEntry>, onChange: (List<StoryEntry>) -> Unit) {
                 onMoveDown = { onChange(story.swap(index, index + 1)) }
             ) {
                 EditorField("Title", entry.title, { v -> onChange(story.replaceAt(index, entry.copy(title = v))) }, singleLine = true)
-                EditorField("When", entry.period, { v -> onChange(story.replaceAt(index, entry.copy(period = v))) }, singleLine = true)
+                DateField(entry.period, { v -> onChange(story.replaceAt(index, entry.copy(period = v))) })
                 EditorField("What happened", entry.body, { v -> onChange(story.replaceAt(index, entry.copy(body = v))) }, minLines = 3)
             }
         }
